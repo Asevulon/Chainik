@@ -4,7 +4,6 @@
 void Model::ABCD1()
 {
 	Omega = Omegam;
-
 	for (int i = 1; i < d + 1; i++)
 	{
 		for (int j = 1; j < jmax - 1; j++)
@@ -16,17 +15,16 @@ void Model::ABCD1()
 	//верхняя граница дна
 	for (int j = 1; j < wn + 2; j++)
 	{
-		D[d + 1][j] = 0;
+		D[d + 1][j] = D1(d + 1, j);
 	}
 
 	if (wn < wj)
 	{
 		for (int j = wn + 2; j < wj + 2; j++)
 		{
-			D[d + 1][j] = 0;
+			D[d + 1][j] = D1(d + 1, j);
 		}
 	}
-	D[d + 1][wj + 1] = 0;
 
 	//вертикальные границы воды/нагревателя
 	if (wn < wj)
@@ -34,12 +32,14 @@ void Model::ABCD1()
 		for (int i = d + 2; i < d + hn + 3; i++)
 		{
 			D[i][wn + 1] = 0;
+
 		}
+
 		for (int i = d + 2; i < d + hj + 3; i++)
 		{
 			D[i][wj + 1] = 0;
+
 		}
-		D[d + hj + 2][wj + 1] = 0;
 	}
 	if (wn == wj)
 	{
@@ -47,7 +47,7 @@ void Model::ABCD1()
 		{
 			D[i][wn + 1] = 0;
 		}
-		D[d + hj + 2][wj + 1] = 0;
+		D[d + hj + 2][wj + 1] = D1(d + hj + 2, wj + 1);
 	}
 
 	//горизонтальная граница нагревателя
@@ -55,7 +55,7 @@ void Model::ABCD1()
 	{
 		for (int j = 1; j < wn + 1; j++)
 		{
-			D[d + 2 + hn][j] = 0;
+			D[d + 2 + hn][j] = D1(d + 2 + hn, j);
 		}
 	}
 
@@ -64,7 +64,7 @@ void Model::ABCD1()
 	{
 		for (int j = 1; j < wj + 1; j++)
 		{
-			D[d + hj + 2][j] = 0;
+			D[d + hj + 2][j] = D1(d + hj + 2, j);
 		}
 	}
 
@@ -72,7 +72,7 @@ void Model::ABCD1()
 	{
 		for (int j = 1; j < wn + 1; j++)
 		{
-			D[d + hj + 2][j] = 0;
+			D[d + hj + 2][j] = D1(d + hj + 2, j);
 		}
 	}
 
@@ -98,7 +98,7 @@ void Model::ABCD1()
 		}
 	}
 	//вода
-	Omegaj;
+	Omega = Omegaj;
 
 	if (wn < wj)
 	{
@@ -154,6 +154,19 @@ void Model::ABCD1()
 			D[i][j] = D1(i, j);
 		}
 	}
+
+	if (hn < hj)
+	{
+		Omega = Omegaj;
+	}
+	else Omega = Omegam;
+	D[d + hn + 2][wn + 1] = D1(d + hn + 2, wn + 1);
+
+	D[d + hj + 2][wj + 1] = D1(d + hj + 2, wj + 1);
+
+	if (wn < wj)Omega = Omegaj;
+	else Omega = Omegan;
+	D[d + 2][wn + 1] = D1(d + 2, wn + 1);
 }
 
 double Model::A1(int j)
@@ -178,7 +191,7 @@ double Model::D1(int i, int j)
 {
 	double t1 = (2 - C[i][j]) * data[i][j];
 	double t2 = -B[i][j] * data[i][j + 1];
-	double t3 = -A[i][j] * data[i][j - j];
+	double t3 = -A[i][j] * data[i][j - 1];
 	double t4 = Omega * dt * (data[i + 1][j] + data[i - 1][j] - 2 * data[i][j]) / (2 * dr * dr);
 	double t5 = dt * P[i][j] / 2;
 	return t1 + t2 + t3 + t4 + t5;
@@ -186,8 +199,8 @@ double Model::D1(int i, int j)
 
 void Model::ABCD2()
 {
+	//дно
 	Omega = Omegam;
-
 	for (int i = 1; i < d + 1; i++)
 	{
 		for (int j = 1; j < jmax - 1; j++)
@@ -216,22 +229,29 @@ void Model::ABCD2()
 	{
 		for (int i = d + 2; i < d + hn + 3; i++)
 		{
-			Dz[i][wn + 1] = 0;
+			Dz[i][wn + 1] = D2(i, wn + 1);
 		}
 		Dz[d + hn + 2][wn + 1] = 0;
 
 		for (int i = d + 2; i < d + hj + 3; i++)
 		{
-			Dz[i][wj + 1] = 0;
+			Dz[i][wj + 1] = D2(i, wj + 1);
 		}
 	}
 	if (wn == wj)
 	{
 		for (int i = d + 2; i < d + hn + 3; i++)
 		{
-			Dz[i][wn + 1] = 0;
+			Dz[i][wn + 1] = D2(i, wn + 1);
 		}
-		Dz[d + hn + 2][wn + 1] = 0;
+		if (hn < hj)
+		{
+			Dz[d + hn + 2][wn + 1] = 0;
+		}
+		else
+		{
+			Dz[d + hn + 2][wn + 1] = 0;
+		}
 	}
 
 	//горизонтальная граница нагревателя
@@ -267,7 +287,6 @@ void Model::ABCD2()
 	{
 		for (int j = 1; j < jmax - 1; j++)
 		{
-
 			Dz[i][j] = D2(i, j);
 		}
 	}
@@ -331,6 +350,7 @@ void Model::ABCD2()
 
 	//металл
 	Omega = Omegam;
+
 	for (int i = d + 1; i < d + hj + 3; i++)
 	{
 		for (int j = wj + 2; j < jmax - 1; j++)
@@ -339,8 +359,22 @@ void Model::ABCD2()
 		}
 	}
 
-	
+	if (hn < hj)
+	{
+		Omega = Omegaj;
+	}
+	else Omega = Omegam;
+	Dz[d + hn + 2][wn + 1] = D2(d + hn + 2, wn + 1);
 
+	Dz[d + 1][wj + 1] = D2(d + 1, wj + 1);
+
+	if (wn < wj)Omega = Omegaj;
+	else Omega = Omegan;
+	Dz[d + 2][wn + 1] = D2(d + 2, wn + 1);
+	if (wn < wj)
+	{
+		Dz[d + 1][wn + 1] = 0;
+	}
 }
 
 double Model::A2()
@@ -369,10 +403,9 @@ double Model::D2(int i, int j)
 
 void Model::InitInstance()
 {
-	psi = ka / dr / km;
-	muN = 1 - psi / 2 / km;
-	muN /= 1 + psi / 2 / km;
-	nuN = psi * T0 / (1 + psi / 2 / km);
+	psi = ka / dr;
+	muN = 1;
+	nuN = 0;
 
 	Omega = 1;
 	Omegam = km * t0 / cvm / L0 / L0;
@@ -391,7 +424,7 @@ void Model::InitInstance()
 	MakeABC();
 	ResizeAlphaBetta();
 
-	/*print(A, "A");
+	print(A, "A");
 	print(B, "B");
 	print(C, "C");
 
@@ -399,7 +432,7 @@ void Model::InitInstance()
 	print(Bz, "Bz");
 	print(Cz, "Cz");
 
-	print(P, "P");*/
+	print(P, "P");
 }
 
 void Model::CalcAlphaBetta()
@@ -420,8 +453,8 @@ void Model::CalcAlphaBettaz()
 {
 	for (int j = 1; j < jmax - 1; j++)
 	{
-		alpha[1][j] = muN;
-		betta[1][j] = nuN;
+		alphaz[1][j] = muN;
+		bettaz[1][j] = nuN;
 		for (int i = 2; i < imax; i++)
 		{
 			alphaz[i][j] = -Bz[i - 1][j] / (Cz[i - 1][j] + Az[i - 1][j] * alphaz[i - 1][j]);
@@ -453,10 +486,10 @@ void Model::CalcHalfStepTz()
 {
 	for (int j = 1; j < jmax - 1; j++)
 	{
-		data[imax -1][j] = (muN * betta[imax - 1][j] + nuN) / (1 - muN * alpha[imax - 1][j]);
+		data[imax -1][j] = (muN * bettaz[imax - 1][j] + nuN) / (1 - muN * alphaz[imax - 1][j]);
 		for (int i = imax - 2; i > 0; i--)
 		{
-			data[i - 1][j] = alpha[i][j] * data[i][j] + betta[i][j];
+			data[i - 1][j] = alphaz[i][j] * data[i][j] + bettaz[i][j];
 		}
 		data[0][j] = muN * data[1][j] + nuN;
 	}
@@ -497,12 +530,11 @@ void Model::main()
 		CalcHalfStepTz();
 		LeaveCriticalSection(&cs);
 		print(data, "data");
-
+		//break;
 		iteration++;
-		psi = ka / sqrt(ka * iteration * dt / cva);
-		muN = 1 - psi / 2 / km;
-		muN /= 1 + psi / 2 / km;
-		nuN = psi * T0 / (1 + psi / 2 / km);
+		//psi = ka / sqrt(ka * iteration * dt / cva);
+		//muN = ;
+		//nuN = psi * T0 / (1 + psi / 2 / km);
 	}
 	
 }
@@ -606,9 +638,9 @@ void Model::MakeABC()
 	//верхняя граница дна
 	for (int j = 1; j < wn + 2; j++)
 	{
-		A[d + 1][j] = km;
-		B[d + 1][j] = km;
-		C[d + 1][j] = -km - km;
+		A[d + 1][j] = A1(j);
+		B[d + 1][j] = B1(j);
+		C[d + 1][j] = C1();
 
 		Az[d + 1][j] = km;
 		Bz[d + 1][j] = kn;
@@ -619,17 +651,18 @@ void Model::MakeABC()
 	{
 		for (int j = wn + 2; j < wj + 2; j++)
 		{
-			A[d + 1][j] = km;
-			B[d + 1][j] = km;
-			C[d + 1][j] = -km - km;
+			A[d + 1][j] = A1(j);
+			B[d + 1][j] = B1(j);
+			C[d + 1][j] = C1();
 
 			Az[d + 1][j] = km;
 			Bz[d + 1][j] = kj;
 			Cz[d + 1][j] = -km - kj;
 		}
 	}
-	Bz[d + 1][wj + 1] = km;
-	Cz[d + 1][wj + 1] = -km - km;
+	Az[d + 1][wj + 1] = A2();
+	Bz[d + 1][wj + 1] = B2();
+	Cz[d + 1][wj + 1] = C2();
 
 	//вертикальные границы воды/нагревателя
 	if (wn < wj)
@@ -640,9 +673,9 @@ void Model::MakeABC()
 			B[i][wn + 1] = kj;
 			C[i][wn + 1] = -kn - kj;
 
-			Az[i][wn + 1] = kn;
-			Bz[i][wn + 1] = kn;
-			Cz[i][wn + 1] = -kn - kn;
+			Az[i][wn + 1] = A2();
+			Bz[i][wn + 1] = B2();
+			Cz[i][wn + 1] = C2();
 		}
 		Bz[d + hn + 2][wn + 1] = kj;
 		Cz[d + hn + 2][wn + 1] = -kn - kj;
@@ -653,13 +686,13 @@ void Model::MakeABC()
 			B[i][wj + 1] = km;
 			C[i][wj + 1] = -kj - km;
 
-			Az[i][wj + 1] = km;
-			Bz[i][wj + 1] = km;
-			Cz[i][wj + 1] = -km - km;
+			Az[i][wj + 1] = A2();
+			Bz[i][wj + 1] = B2();
+			Cz[i][wj + 1] = C2();
 		}
-		A[d + hj + 2][wj + 1] = km;
-		B[d + hj + 2][wj + 1] = km;
-		C[d + hj + 2][wj + 1] = -km - km;
+		A[d + hj + 2][wj + 1] = A1(wj + 1);
+		B[d + hj + 2][wj + 1] = B1(wj + 1);
+		C[d + hj + 2][wj + 1] = C1();
 	}
 	if (wn == wj)
 	{
@@ -669,9 +702,9 @@ void Model::MakeABC()
 			B[i][wn + 1] = km;
 			C[i][wn + 1] = -kn - km;
 
-			Az[i][wn + 1] = kn;
-			Bz[i][wn + 1] = kn;
-			Cz[i][wn + 1] = -kn - kn;
+			Az[i][wn + 1] = A2();
+			Bz[i][wn + 1] = B2();
+			Cz[i][wn + 1] = C2();
 		}
 		if (hn < hj)
 		{
@@ -683,9 +716,9 @@ void Model::MakeABC()
 			Bz[d + hn + 2][wn + 1] = km;
 			Cz[d + hn + 2][wn + 1] = -kn - km;
 		}
-		A[d + hj + 2][wj + 1] = km;
-		B[d + hj + 2][wj + 1] = km;
-		C[d + hj + 2][wj + 1] = -km - km;
+		A[d + hj + 2][wj + 1] = A1(wj + 1);
+		B[d + hj + 2][wj + 1] = B1(wj + 1);
+		C[d + hj + 2][wj + 1] = C1();
 	}
 
 	//горизонтальная граница нагревателя
@@ -693,9 +726,9 @@ void Model::MakeABC()
 	{
 		for (int j = 1; j < wn + 1; j++)
 		{
-			A[d + 2 + hn][j] = kn;
-			B[d + 2 + hn][j] = kn;
-			C[d + 2 + hn][j] = -kn - kn;
+			A[d + 2 + hn][j] = A1(j);
+			B[d + 2 + hn][j] = B1(j);
+			C[d + 2 + hn][j] = C1();
 
 			Az[d + 2 + hn][j] = kn;
 			Bz[d + 2 + hn][j] = kj;
@@ -708,9 +741,9 @@ void Model::MakeABC()
 	{
 		for (int j = 1; j < wj + 1; j++)
 		{
-			A[d + hj + 2][j] = km;
-			B[d + hj + 2][j] = km;
-			C[d + hj + 2][j] = -km - km;
+			A[d + hj + 2][j] = A1(j);
+			B[d + hj + 2][j] = B1(j);
+			C[d + hj + 2][j] = C1();
 
 			Az[d + hj + 2][j] = kj;
 			Bz[d + hj + 2][j] = km;
@@ -722,9 +755,9 @@ void Model::MakeABC()
 	{
 		for (int j = 1; j < wn + 1; j++)
 		{
-			A[d + hj + 2][j] = km;
-			B[d + hj + 2][j] = km;
-			C[d + hj + 2][j] = -km - km;
+			A[d + hj + 2][j] = A1(j);
+			B[d + hj + 2][j] = B1(j);
+			C[d + hj + 2][j] = C1();
 
 			Az[d + hj + 2][j] = kn;
 			Bz[d + hj + 2][j] = km;
@@ -851,6 +884,35 @@ void Model::MakeABC()
 			Bz[i][j] = B2();
 			Cz[i][j] = C2();
 		}
+	}
+
+	if (hn < hj)
+	{
+		Omega = Omegaj;
+	}
+	else Omega = Omegam;
+	A[d + hn + 2][wn + 1] = A1(wn + 1);
+	B[d + hn + 2][wn + 1] = B1(wn + 1);
+	C[d + hn + 2][wn + 1] = C1();
+
+	Az[d + hn + 2][wn + 1] = A2();
+	Bz[d + hn + 2][wn + 1] = B2();
+	Cz[d + hn + 2][wn + 1] = C2();
+
+	if (wn < wj)Omega = Omegaj;
+	else Omega = Omegan;
+	A[d + 2][wn + 1] = A1(wn + 1);
+	B[d + 2][wn + 1] = B1(wn + 1);
+	C[d + 2][wn + 1] = C1();
+
+	Az[d + 2][wn + 1] = A2();
+	Bz[d + 2][wn + 1] = B2();
+	Cz[d + 2][wn + 1] = C2();
+	if (wn < wj)
+	{
+		Az[d + 1][wn + 1] = km;
+		Bz[d + 1][wn + 1] = kj;
+		Cz[d + 1][wn + 1] = -km - kj;
 	}
 }
 
