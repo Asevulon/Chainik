@@ -2,11 +2,112 @@
 #include<vector>
 using namespace std;
 
+
+struct ModelCellsParams
+{
+	int hj = 0;
+	int wj = 0;
+	int hn = 0;
+	int wn = 0;
+	int d = 0;
+
+	double kj = 0;
+	double kn = 0;
+	double km = 0;
+
+	double Omegam = 0;
+	double Omegaj = 0;
+	double Omegan = 0;
+
+	double T = 0;
+	double dr = 0;
+	double dt = 0;
+
+	double P0;
+};
+class ModelCells
+{
+private:
+	
+	enum CellType
+	{
+		metall,
+		heater,
+		liquid,
+		none
+	};
+	struct Cell
+	{
+		double A = 0;
+		double B = 0;
+		double C = 0;
+		double D = 0;
+
+		double Az = 0;
+		double Bz = 0;
+		double Cz = 0;
+		double Dz = 0;
+
+		double T = 0;
+		
+		CellType type = none;
+
+		bool border = false;
+		bool borderz = false;
+	};
+
+	ModelCellsParams p;
+	vector<vector<Cell>>data;
+	vector<vector<double>>P;
+protected:
+	void PresetT();
+	void SetMaterial();
+	void SetBorders();
+	void SetP0();
+	void SetABC();
+	inline void A1(int i, int j);
+	inline void B1(int i, int j);
+	inline void C1(int i, int j);
+	inline void D1(int i, int j);
+	inline void A2(int i, int j);
+	inline void B2(int i, int j);
+	inline void C2(int i, int j);
+	inline void D2(int i, int j);
+	inline double GetOmega(int i, int j);
+	inline double Getk(int i, int j);
+	void ModelCells::PrintCellBordersz(char* name);
+	void ModelCells::PrintCellBorders(char* name);
+	void PrintCellType(char*);
+	vector<vector<CellType>> GetCellsTypes();
+public:
+	void Create(ModelCellsParams& p);
+	vector<vector<double>> GetA();
+	vector<vector<double>> GetB();
+	vector<vector<double>> GetC();
+	vector<vector<double>> GetD();
+	vector<vector<double>> GetAz();
+	vector<vector<double>> GetBz();
+	vector<vector<double>> GetCz();
+	vector<vector<double>> GetDz();
+
+	vector<vector<double>> GetT();
+	void SetT(vector<vector<double>>& ts);
+
+	void CalcD();
+	void CalcDz();
+
+	int GetHeight();
+	int GetWidth();
+};
+
+
+
+
+
 class Model
 {
 private:
 	vector<vector<double>>data;
-	vector<vector<double>>P;
 	vector<vector<double>>
 		A, B, C, D, alpha, betta,
 		Az, Bz, Cz, Dz, alphaz, bettaz;
@@ -61,22 +162,10 @@ private:
 
 	CRITICAL_SECTION cs;
 	long long iteration = 0;
+	ModelCells mc;
+
 protected:
-	void ABCD1();
-	double A1(int j);
-	double B1(int j);
-	double C1();
-	double D1(int i, int j);
-
-	void ABCD2();
-	double A2();
-	double B2();
-	double C2();
-	double D2(int i, int j);
-
 	void MakeStartVals();
-	void MakeP();
-	void MakeABC();
 	void ResizeAlphaBetta();
 	void InitInstance();
 	void CalcAlphaBetta();

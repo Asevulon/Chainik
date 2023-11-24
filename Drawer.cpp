@@ -189,6 +189,7 @@ void Drawer::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 void Drawer::SetData(std::vector<std::vector<double>>& in)
 {
+	if (in.empty())return;
 	data = in;
 	vector<double>Max;
 	Max.resize(data.size());

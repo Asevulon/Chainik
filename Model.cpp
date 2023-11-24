@@ -1,405 +1,6 @@
 #include"pch.h"
 #include"Model.h"
 
-void Model::ABCD1()
-{
-	Omega = Omegam;
-	for (int i = 1; i < d + 1; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			D[i][j] = D1(i, j);
-		}
-	}
-
-	//верхняя граница дна
-	for (int j = 1; j < wn + 2; j++)
-	{
-		D[d + 1][j] = D1(d + 1, j);
-	}
-
-	if (wn < wj)
-	{
-		for (int j = wn + 2; j < wj + 2; j++)
-		{
-			D[d + 1][j] = D1(d + 1, j);
-		}
-	}
-
-	//вертикальные границы воды/нагревателя
-	if (wn < wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			D[i][wn + 1] = 0;
-
-		}
-
-		for (int i = d + 2; i < d + hj + 3; i++)
-		{
-			D[i][wj + 1] = 0;
-
-		}
-	}
-	if (wn == wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			D[i][wn + 1] = 0;
-		}
-		D[d + hj + 2][wj + 1] = D1(d + hj + 2, wj + 1);
-	}
-
-	//горизонтальная граница нагревателя
-	if (hn < hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			D[d + 2 + hn][j] = D1(d + 2 + hn, j);
-		}
-	}
-
-	//нижняя граница крышки
-	if (hn < hj)
-	{
-		for (int j = 1; j < wj + 1; j++)
-		{
-			D[d + hj + 2][j] = D1(d + hj + 2, j);
-		}
-	}
-
-	if (hn == hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			D[d + hj + 2][j] = D1(d + hj + 2, j);
-		}
-	}
-
-	//крышка
-	Omega = Omegam;
-
-	for (int i = d + hj + 3; i < d + d + hj + 3; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			D[i][j] = D1(i, j);
-		}
-	}
-
-	//нагреватель
-	Omega = Omegan;
-
-	for (int i = d + 2; i < d + hn + 2; i++)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			D[i][j] = D1(i, j);
-		}
-	}
-	//вода
-	Omega = Omegaj;
-
-	if (wn < wj)
-	{
-		if (hn < hj)
-		{
-			for (int i = d + 2; i < d + hn + 3; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					D[i][j] = D1(i, j);
-				}
-			}
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					D[i][j] = D1(i, j);
-				}
-			}
-		}
-		else
-		{
-			for (int i = d + 2; i < d + hj + 2; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					D[i][j] = D1(i, j);
-				}
-			}
-		}
-	}
-	else
-	{
-		if (hn < hj)
-		{
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					D[i][j] = D1(i, j);
-				}
-			}
-		}
-	}
-
-	//металл
-	Omega = Omegam;
-
-	for (int i = d + 1; i < d + hj + 3; i++)
-	{
-		for (int j = wj + 2; j < jmax - 1; j++)
-		{
-			D[i][j] = D1(i, j);
-		}
-	}
-
-	if (hn < hj)
-	{
-		Omega = Omegaj;
-	}
-	else Omega = Omegam;
-	D[d + hn + 2][wn + 1] = D1(d + hn + 2, wn + 1);
-
-	D[d + hj + 2][wj + 1] = D1(d + hj + 2, wj + 1);
-
-	if (wn < wj)Omega = Omegaj;
-	else Omega = Omegan;
-	D[d + 2][wn + 1] = D1(d + 2, wn + 1);
-}
-
-double Model::A1(int j)
-{
-	double t1 = Omega * dt / (4. * dr);
-	double t2 = -1. / dr + 1. / (2. * j * dr);
-	return t1 * t2;
-}
-double Model::B1(int j)
-{
-	double t1 = -Omega * dt / (4. * dr);
-	double t2 = 1. / dr + 1. / (2. * j * dr);
-	return t1 * t2;
-}
-
-double Model::C1()
-{
-	return 1 + Omega * dt / (2 * dr * dr);
-}
-
-double Model::D1(int i, int j)
-{
-	double t1 = (2 - C[i][j]) * data[i][j];
-	double t2 = -B[i][j] * data[i][j + 1];
-	double t3 = -A[i][j] * data[i][j - 1];
-	double t4 = Omega * dt * (data[i + 1][j] + data[i - 1][j] - 2 * data[i][j]) / (2 * dr * dr);
-	double t5 = dt * P[i][j] / 2;
-	return t1 + t2 + t3 + t4 + t5;
-}
-
-void Model::ABCD2()
-{
-	//дно
-	Omega = Omegam;
-	for (int i = 1; i < d + 1; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			Dz[i][j] = D2(i, j);
-		}
-	}
-
-	//верхняя граница дна
-	for (int j = 1; j < wn + 2; j++)
-	{
-		Dz[d + 1][j] = 0;
-	}
-
-	if (wn < wj)
-	{
-		for (int j = wn + 2; j < wj + 2; j++)
-		{
-			Dz[d + 1][j] = 0;
-		}
-	}
-	Dz[d + 1][wj + 1] = 0;
-
-	//вертикальные границы воды/нагревателя
-	if (wn < wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			Dz[i][wn + 1] = D2(i, wn + 1);
-		}
-		Dz[d + hn + 2][wn + 1] = 0;
-
-		for (int i = d + 2; i < d + hj + 3; i++)
-		{
-			Dz[i][wj + 1] = D2(i, wj + 1);
-		}
-	}
-	if (wn == wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			Dz[i][wn + 1] = D2(i, wn + 1);
-		}
-		if (hn < hj)
-		{
-			Dz[d + hn + 2][wn + 1] = 0;
-		}
-		else
-		{
-			Dz[d + hn + 2][wn + 1] = 0;
-		}
-	}
-
-	//горизонтальная граница нагревателя
-	if (hn < hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			Dz[d + 2 + hn][j] = 0;
-		}
-	}
-
-	//нижняя граница крышки
-	if (hn < hj)
-	{
-		for (int j = 1; j < wj + 1; j++)
-		{
-			Dz[d + hj + 2][j] = 0;
-		}
-	}
-
-	if (hn == hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			Dz[d + hj + 2][j] = 0;
-		}
-	}
-
-	//крышка
-	Omega = Omegam;
-
-	for (int i = d + hj + 3; i < d + d + hj + 3; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			Dz[i][j] = D2(i, j);
-		}
-	}
-
-	//нагреватель
-	Omega = Omegan;
-
-	for (int i = d + 2; i < d + hn + 2; i++)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			Dz[i][j] = D2(i, j);
-		}
-	}
-	//вода
-	Omega = Omegaj;
-
-	if (wn < wj)
-	{
-		if (hn < hj)
-		{
-			for (int i = d + 2; i < d + hn + 3; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					Dz[i][j] = D2(i, j);
-				}
-			}
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					Dz[i][j] = D2(i, j);
-				}
-			}
-		}
-		else
-		{
-			for (int i = d + 2; i < d + hj + 2; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					Dz[i][j] = D2(i, j);
-				}
-			}
-		}
-	}
-	else
-	{
-		if (hn < hj)
-		{
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					Dz[i][j] = D2(i, j);
-				}
-			}
-		}
-	}
-
-	//металл
-	Omega = Omegam;
-
-	for (int i = d + 1; i < d + hj + 3; i++)
-	{
-		for (int j = wj + 2; j < jmax - 1; j++)
-		{
-			Dz[i][j] = D2(i, j);
-		}
-	}
-
-	if (hn < hj)
-	{
-		Omega = Omegaj;
-	}
-	else Omega = Omegam;
-	Dz[d + hn + 2][wn + 1] = D2(d + hn + 2, wn + 1);
-
-	Dz[d + 1][wj + 1] = D2(d + 1, wj + 1);
-
-	if (wn < wj)Omega = Omegaj;
-	else Omega = Omegan;
-	Dz[d + 2][wn + 1] = D2(d + 2, wn + 1);
-	if (wn < wj)
-	{
-		Dz[d + 1][wn + 1] = 0;
-	}
-}
-
-double Model::A2()
-{
-	return -Omega * dt / (4 * dr * dr);
-}
-
-double Model::B2()
-{
-	return -Omega * dt / (4 * dr * dr);;
-}
-
-double Model::C2()
-{
-	return 1 + Omega * dt / (2 * dr * dr);;
-}
-
-double Model::D2(int i, int j)
-{
-	double t1 = Omega * dt * (data[i][j + 1] + data[i][j - 1] - 2 * data[i][j]) / (2 * dr * dr);
-	double t2 = Omega * dt * (data[i][j + 1] - data[i][j - 1]) / (2 * dr * j * 2 * dr);
-	double t3 = dt * P[i][j] / 2;
-	double t4 = (2 - Cz[i][j]) * data[i][j] - Az[i][j] * data[i - 1][j] - Bz[i][j] * data[i + 1][j];
-	return t1 + t2 + t3 + t4;
-}
 
 void Model::InitInstance()
 {
@@ -412,27 +13,54 @@ void Model::InitInstance()
 	Omegaj = kj * t0 / cvj / L0 / L0;
 	Omegan = kn * t0 / cvn / L0 / L0;
 
-	imax = 2 * d + hj + 4;
-	if (hn == hj)imax--;
+	ModelCellsParams p;
+	p.d = d;
+	p.hj = hj;
+	p.hn = hn;
+	p.kj = kj;
+	p.km = km;
+	p.kn = kn;
+	p.wj = wj;
+	p.wn = wn;
+	p.Omegaj = Omegaj;
+	p.Omegam = Omegam;
+	p.Omegan = Omegan;
+	p.T = T0;
+	p.dr = dr;
+	p.dt = dt;
+	p.P0 = P0;
+	mc.Create(p);
 
-	jmax = wj + d + 3;
+	imax = mc.GetHeight();
+	jmax = mc.GetWidth();
 
-	MakeStartVals();
+	A = mc.GetA();
+	B = mc.GetB();
+	C = mc.GetC();
+
+	Az = mc.GetAz();
+	Bz = mc.GetBz();
+	Cz = mc.GetCz();
+
+	data = mc.GetT();
 	
-	MakeP();
-	
-	MakeABC();
 	ResizeAlphaBetta();
 
+	mc.CalcD();
+	mc.CalcDz();
+	D = mc.GetD();
+	Dz = mc.GetDz();
+	
 	print(A, "A");
 	print(B, "B");
 	print(C, "C");
+	print(D, "D");
 
 	print(Az, "Az");
 	print(Bz, "Bz");
 	print(Cz, "Cz");
+	print(Dz, "Dz");
 
-	print(P, "P");
 }
 
 void Model::CalcAlphaBetta()
@@ -512,26 +140,31 @@ Model::~Model()
 void Model::main()
 {
 	InitInstance();
+	//return;
 	iteration = 0;
 	Continue = true;
 	while (Continue)
 	{
-		ABCD1();
-		print(D, "D");
+		mc.CalcD();
+		D = mc.GetD();
 		CalcAlphaBetta();
 		EnterCriticalSection(&cs);
 		CalcHalfStepT();
+		mc.SetT(data);
 		LeaveCriticalSection(&cs);
+		//print(D, "D");
 
-		ABCD2();
-		print(Dz, "Dz");
+		mc.CalcDz();
+		Dz = mc.GetDz();
 		CalcAlphaBettaz();
 		EnterCriticalSection(&cs);
 		CalcHalfStepTz();
+		mc.SetT(data);
 		LeaveCriticalSection(&cs);
-		print(data, "data");
-		//break;
+		//print(Dz, "Dz");
+
 		iteration++;
+		//break;
 		//psi = ka / sqrt(ka * iteration * dt / cva);
 		//muN = ;
 		//nuN = psi * T0 / (1 + psi / 2 / km);
@@ -580,341 +213,6 @@ void Model::MakeStartVals()
 	}
 }
 
-void Model::MakeP()
-{
-	P.resize(imax);
-	for (int i = 0; i < imax; i++)P[i].resize(jmax);
-
-	int iborder = d + 2 + hn;
-	for (int i = d + 2; i < iborder; i++)
-	{
-		for (int j = 1; j <= wn; j++)
-		{
-			P[i][j] = P0;
-		}
-	}
-}
-
-void Model::MakeABC()
-{
-	A.resize(imax);
-	B.resize(imax);
-	C.resize(imax);
-	D.resize(imax);
-
-	Az.resize(imax);
-	Bz.resize(imax);
-	Cz.resize(imax);
-	Dz.resize(imax);
-	for (int i = 0; i < imax; i++)
-	{
-		A[i].resize(jmax);
-		B[i].resize(jmax);
-		C[i].resize(jmax);
-		D[i].resize(jmax);
-
-		Az[i].resize(jmax);
-		Bz[i].resize(jmax);
-		Cz[i].resize(jmax);
-		Dz[i].resize(jmax);
-	}
-
-	//дно
-	Omega = Omegam;
-	for (int i = 1; i < d + 1; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			A[i][j] = A1(j);
-			B[i][j] = B1(j);
-			C[i][j] = C1();
-
-			Az[i][j] = A2();
-			Bz[i][j] = B2();
-			Cz[i][j] = C2();
-		}
-	}
-
-	//верхняя граница дна
-	for (int j = 1; j < wn + 2; j++)
-	{
-		A[d + 1][j] = A1(j);
-		B[d + 1][j] = B1(j);
-		C[d + 1][j] = C1();
-
-		Az[d + 1][j] = km;
-		Bz[d + 1][j] = kn;
-		Cz[d + 1][j] = -km - kn;
-	}
-
-	if (wn < wj)
-	{
-		for (int j = wn + 2; j < wj + 2; j++)
-		{
-			A[d + 1][j] = A1(j);
-			B[d + 1][j] = B1(j);
-			C[d + 1][j] = C1();
-
-			Az[d + 1][j] = km;
-			Bz[d + 1][j] = kj;
-			Cz[d + 1][j] = -km - kj;
-		}
-	}
-	Az[d + 1][wj + 1] = A2();
-	Bz[d + 1][wj + 1] = B2();
-	Cz[d + 1][wj + 1] = C2();
-
-	//вертикальные границы воды/нагревателя
-	if (wn < wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			A[i][wn + 1] = kn;
-			B[i][wn + 1] = kj;
-			C[i][wn + 1] = -kn - kj;
-
-			Az[i][wn + 1] = A2();
-			Bz[i][wn + 1] = B2();
-			Cz[i][wn + 1] = C2();
-		}
-		Bz[d + hn + 2][wn + 1] = kj;
-		Cz[d + hn + 2][wn + 1] = -kn - kj;
-
-		for (int i = d + 2; i < d + hj + 3; i++)
-		{
-			A[i][wj + 1] = kj;
-			B[i][wj + 1] = km;
-			C[i][wj + 1] = -kj - km;
-
-			Az[i][wj + 1] = A2();
-			Bz[i][wj + 1] = B2();
-			Cz[i][wj + 1] = C2();
-		}
-		A[d + hj + 2][wj + 1] = A1(wj + 1);
-		B[d + hj + 2][wj + 1] = B1(wj + 1);
-		C[d + hj + 2][wj + 1] = C1();
-	}
-	if (wn == wj)
-	{
-		for (int i = d + 2; i < d + hn + 3; i++)
-		{
-			A[i][wn + 1] = kn;
-			B[i][wn + 1] = km;
-			C[i][wn + 1] = -kn - km;
-
-			Az[i][wn + 1] = A2();
-			Bz[i][wn + 1] = B2();
-			Cz[i][wn + 1] = C2();
-		}
-		if (hn < hj)
-		{
-			Bz[d + hn + 2][wn + 1] = kj;
-			Cz[d + hn + 2][wn + 1] = -kn - kj;
-		}
-		else
-		{
-			Bz[d + hn + 2][wn + 1] = km;
-			Cz[d + hn + 2][wn + 1] = -kn - km;
-		}
-		A[d + hj + 2][wj + 1] = A1(wj + 1);
-		B[d + hj + 2][wj + 1] = B1(wj + 1);
-		C[d + hj + 2][wj + 1] = C1();
-	}
-
-	//горизонтальная граница нагревателя
-	if (hn < hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			A[d + 2 + hn][j] = A1(j);
-			B[d + 2 + hn][j] = B1(j);
-			C[d + 2 + hn][j] = C1();
-
-			Az[d + 2 + hn][j] = kn;
-			Bz[d + 2 + hn][j] = kj;
-			Cz[d + 2 + hn][j] = -kn - kj;
-		}
-	}
-
-	//нижняя граница крышки
-	if (hn < hj)
-	{
-		for (int j = 1; j < wj + 1; j++)
-		{
-			A[d + hj + 2][j] = A1(j);
-			B[d + hj + 2][j] = B1(j);
-			C[d + hj + 2][j] = C1();
-
-			Az[d + hj + 2][j] = kj;
-			Bz[d + hj + 2][j] = km;
-			Cz[d + hj + 2][j] = -kj - km;
-		}
-	}
-
-	if (hn == hj)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			A[d + hj + 2][j] = A1(j);
-			B[d + hj + 2][j] = B1(j);
-			C[d + hj + 2][j] = C1();
-
-			Az[d + hj + 2][j] = kn;
-			Bz[d + hj + 2][j] = km;
-			Cz[d + hj + 2][j] = -kn - km;
-		}
-	}
-
-	//крышка
-	Omega = Omegam;
-
-	for (int i = d + hj + 3; i < d + d + hj + 3; i++)
-	{
-		for (int j = 1; j < jmax - 1; j++)
-		{
-			A[i][j] = A1(j);
-			B[i][j] = B1(j);
-			C[i][j] = C1();
-
-			Az[i][j] = A2();
-			Bz[i][j] = B2();
-			Cz[i][j] = C2();
-		}
-	}
-
-	//нагреватель
-	Omega = Omegan;
-
-	for (int i = d + 2; i < d + hn + 2; i++)
-	{
-		for (int j = 1; j < wn + 1; j++)
-		{
-			A[i][j] = A1(j);
-			B[i][j] = B1(j);
-			C[i][j] = C1();
-
-			Az[i][j] = A2();
-			Bz[i][j] = B2();
-			Cz[i][j] = C2();
-		}
-	}
-	//вода
-	Omega = Omegaj;
-
-	if (wn < wj)
-	{
-		if (hn < hj)
-		{
-			for (int i = d + 2; i < d + hn + 3; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					A[i][j] = A1(j);
-					B[i][j] = B1(j);
-					C[i][j] = C1();
-
-					Az[i][j] = A2();
-					Bz[i][j] = B2();
-					Cz[i][j] = C2();
-				}
-			}
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					A[i][j] = A1(j);
-					B[i][j] = B1(j);
-					C[i][j] = C1();
-
-					Az[i][j] = A2();
-					Bz[i][j] = B2();
-					Cz[i][j] = C2();
-				}
-			}
-		}
-		else
-		{
-			for (int i = d + 2; i < d + hj + 2; i++)
-			{
-				for (int j = wn + 2; j < wj + 1; j++)
-				{
-					A[i][j] = A1(j);
-					B[i][j] = B1(j);
-					C[i][j] = C1();
-
-					Az[i][j] = A2();
-					Bz[i][j] = B2();
-					Cz[i][j] = C2();
-				}
-			}
-		}
-	}
-	else
-	{
-		if (hn < hj)
-		{
-			for (int i = d + hn + 3; i < d + hj + 2; i++)
-			{
-				for (int j = 1; j < wj + 1; j++)
-				{
-					A[i][j] = A1(j);
-					B[i][j] = B1(j);
-					C[i][j] = C1();
-
-					Az[i][j] = A2();
-					Bz[i][j] = B2();
-					Cz[i][j] = C2();
-				}
-			}
-		}
-	}
-
-	//металл
-	Omega = Omegam;
-
-	for (int i = d + 1; i < d + hj + 3; i++)
-	{
-		for (int j = wj + 2; j < jmax - 1; j++)
-		{
-			A[i][j] = A1(j);
-			B[i][j] = B1(j);
-			C[i][j] = C1();
-
-			Az[i][j] = A2();
-			Bz[i][j] = B2();
-			Cz[i][j] = C2();
-		}
-	}
-
-	if (hn < hj)
-	{
-		Omega = Omegaj;
-	}
-	else Omega = Omegam;
-	A[d + hn + 2][wn + 1] = A1(wn + 1);
-	B[d + hn + 2][wn + 1] = B1(wn + 1);
-	C[d + hn + 2][wn + 1] = C1();
-
-	Az[d + hn + 2][wn + 1] = A2();
-	Bz[d + hn + 2][wn + 1] = B2();
-	Cz[d + hn + 2][wn + 1] = C2();
-
-	if (wn < wj)Omega = Omegaj;
-	else Omega = Omegan;
-	A[d + 2][wn + 1] = A1(wn + 1);
-	B[d + 2][wn + 1] = B1(wn + 1);
-	C[d + 2][wn + 1] = C1();
-
-	Az[d + 2][wn + 1] = A2();
-	Bz[d + 2][wn + 1] = B2();
-	Cz[d + 2][wn + 1] = C2();
-	if (wn < wj)
-	{
-		Az[d + 1][wn + 1] = km;
-		Bz[d + 1][wn + 1] = kj;
-		Cz[d + 1][wn + 1] = -km - kj;
-	}
-}
 
 void Model::ResizeAlphaBetta()
 {
@@ -956,3 +254,590 @@ void print(vector<vector<double>>& data, char* filename)
 	}
 	of.close();
 }
+
+void ModelCells::PresetT()
+{
+	for (int i = 0; i < data.size(); i++)
+	{
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			data[i][j].T = p.T;
+		}
+	}
+}
+
+void ModelCells::SetMaterial()
+{
+	int i = 1;
+	int imax = i + p.d;
+	for (; i < imax; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			data[i][j].type = metall;
+		}
+	}
+
+
+	int backup = i + 3;
+	imax += p.hj + 3;
+
+	for (; i < imax; i++)
+	{
+		for (int j = 1; j < p.wj + 1; j++)
+		{
+			data[i][j].type = liquid;
+		}
+		for (int j = p.wj + 1; j < data[i].size() - 1; j++)
+		{
+			data[i][j].type = metall;
+		}
+	}
+	data[backup - 3][p.wj].type = metall;
+
+	i = backup;
+	backup = imax;
+	imax = i + p.hn;
+	for (; i < imax; i++)
+	{
+		for (int j = 1; j < p.wn + 1; j++)
+		{
+			data[i][j].type = heater;
+		}
+	}
+
+	i = backup;
+	imax = i + p.d;
+	for (; i < imax; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			data[i][j].type = metall;
+		}
+	}
+	data[backup - 1][p.wj].type = metall;
+}
+
+void ModelCells::SetBorders()
+{
+
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < p.wn + 2; j++)
+		{
+			if (data[i][j - 1].type == none)
+			{
+				data[i][j].border = false;
+				continue;
+			}
+			if (data[i][j].type != data[i][j - 1].type)data[i][j].border = true;
+			else data[i][j].border = false;
+		}
+	}
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j + 1].type == none)
+			{
+				data[i][j].border = false;
+				continue;
+			}
+			if (data[i][j].type != data[i][j + 1].type)data[i][j].border = true;
+			else data[i][j].border = false;
+		}
+	}
+	
+	int half = p.hn / 2 + p.d + 4;
+	for (int j = 1; j < data[0].size() - 1; j++)
+	{
+		for (int i = 2; i < half; i++)
+		{
+			if (data[i + 1][j].type == none)
+			{
+				data[i][j].borderz = false;
+				continue;
+			}
+			if (data[i][j].type != data[i + 1][j].type)data[i][j].borderz = true;
+			else data[i][j].borderz = false;
+		}
+	}
+
+	for (int j = 1; j < data[0].size() - 1; j++)
+	{
+		for (int i = half; i < data.size() - 1; i++)
+		{
+			if (data[i - 1][j].type == none)
+			{
+				data[i][j].borderz = false;
+				continue;
+			}
+			if (data[i][j].type != data[i - 1][j].type)data[i][j].borderz = true;
+			else data[i][j].borderz = false;
+		}
+	}
+}
+
+void ModelCells::SetP0()
+{
+	P.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		P[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			if (data[i][j].type == heater)P[i][j] = p.P0;
+		}
+	}
+}
+
+void ModelCells::SetABC()
+{
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < p.wn + 2; j++)
+		{
+			if (data[i][j].border)
+			{
+				data[i][j].A = Getk(i, j - 1);
+				data[i][j].B = Getk(i, j);
+				data[i][j].C = -data[i][j].A - data[i][j].B;
+				data[i][j].D = 0;
+			}
+			else
+			{
+				A1(i, j);
+				B1(i, j);
+				C1(i, j);
+			}
+		}
+	}
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].border)
+			{
+				data[i][j].A = Getk(i, j);
+				data[i][j].B = Getk(i, j + 1);
+				data[i][j].C = -data[i][j].A - data[i][j].B;
+				data[i][j].D = 0;
+			}
+			else
+			{
+				A1(i, j);
+				B1(i, j);
+				C1(i, j);
+			}
+		}
+	}
+
+	int half = p.hn / 2 + p.d + 4;
+	for (int i = 1; i < half; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].borderz)
+			{
+				data[i][j].Az = Getk(i, j);
+				data[i][j].Bz = Getk(i + 1, j);
+				data[i][j].Cz = -data[i][j].Az - data[i][j].Bz;
+				data[i][j].Dz = 0;
+			}
+			else
+			{
+				A2(i, j);
+				B2(i, j);
+				C2(i, j);
+			}
+		}
+	}
+
+	for (int i = half ; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].borderz)
+			{
+				data[i][j].Az = Getk(i - 1, j);
+				data[i][j].Bz = Getk(i, j);
+				data[i][j].Cz = -data[i][j].Az - data[i][j].Bz;
+				data[i][j].Dz = 0;
+			}
+			else
+			{
+				A2(i, j);
+				B2(i, j);
+				C2(i, j);
+			}
+		}
+	}
+}
+
+inline void ModelCells::A1(int i, int j)
+{
+	double t1 = GetOmega(i, j) * p.dt / (4. * p.dr);
+	double t2 = -1. / p.dr + 1. / (2. * j * p.dr);
+	data[i][j].A = t1 * t2;
+}
+
+inline void ModelCells::B1(int i, int j)
+{
+	double t1 = -GetOmega(i, j) * p.dt / (4. * p.dr);
+	double t2 = 1. / p.dr + 1. / (2. * j * p.dr);
+	data[i][j].B = t1 * t2;
+}
+
+inline void ModelCells::C1(int i, int j)
+{
+	data[i][j].C = 1 + GetOmega(i, j) * p.dt / (2 * p.dr * p.dr);
+}
+
+inline void ModelCells::D1(int i, int j)
+{
+	double t1 = (2 - data[i][j].C) * data[i][j].T;
+	double t2 = -data[i][j].B * data[i][j + 1].T;
+	double t3 = -data[i][j].A * data[i][j - 1].T;
+	double t4 = GetOmega(i, j) * p.dt * (data[i + 1][j].T + data[i - 1][j].T - 2 * data[i][j].T) / (2 * p.dr * p.dr);
+	double t5 = p.dt * P[i][j] / 2;
+	data[i][j].D = t1 + t2 + t3 + t4 + t5;
+}
+
+inline void ModelCells::A2(int i, int j)
+{
+	data[i][j].Az = - GetOmega(i, j) * p.dt / (4 * p.dr * p.dr);
+}
+
+inline void ModelCells::B2(int i, int j)
+{
+	data[i][j].Bz = - GetOmega(i, j) * p.dt / (4 * p.dr * p.dr);
+}
+
+inline void ModelCells::C2(int i, int j)
+{
+	data[i][j].Cz = 1 + GetOmega(i, j) * p.dt / (2 * p.dr * p.dr);
+}
+
+inline void ModelCells::D2(int i, int j)
+{
+	double t1 = GetOmega(i, j) * p.dt * (data[i][j + 1].T + data[i][j - 1].T - 2 * data[i][j].T) / (2 * p.dr * p.dr);
+	double t2 = GetOmega(i, j) * p.dt * (data[i][j + 1].T - data[i][j - 1].T) / (2 * p.dr * j * 2 * p.dr);
+	double t3 = p.dt * P[i][j] / 2;
+	double t4 = (2 - data[i][j].Cz) * data[i][j].T - data[i][j].Az * data[i - 1][j].T - data[i][j].Bz * data[i + 1][j].T;
+	data[i][j].Dz = t1 + t2 + t3 + t4;
+}
+
+inline double ModelCells::GetOmega(int i, int j)
+{
+	switch (data[i][j].type)
+	{
+	case metall: return p.Omegam;
+	case heater: return p.Omegan;
+	case liquid: return p.Omegaj;
+	default: abort();
+	}
+}
+
+inline double ModelCells::Getk(int i, int j)
+{
+	switch (data[i][j].type)
+	{
+	case metall:return p.km;
+	case liquid:return p.kj;
+	case heater:return p.kn;
+	default:
+		abort();
+	}
+}
+
+void ModelCells::PrintCellType(char*name)
+{
+	ofstream out(name);
+	auto mas = GetCellsTypes();
+
+	out << setw(8) << setprecision(1) << setfill(' ') << ' ';
+
+	for (int i = 0; i < mas[0].size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+	}
+	out << endl;
+
+	for (int i = 0; i < mas.size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+		for (int j = 0; j < mas[i].size(); j++)
+		{
+			string str;
+			if (mas[i][j] == none)str = "none";
+			else
+				if (mas[i][j] == metall)str = "metall";
+				else
+					if (mas[i][j] == liquid)str = "liquid";
+					else
+						if (mas[i][j] == heater)str = "heater";
+			out << setw(8) << setfill(' ') << str;
+		}
+		out << endl;
+	}
+	out.close();
+}
+void ModelCells::PrintCellBorders(char* name)
+{
+	ofstream out(name);
+
+	out << setw(8) << setprecision(1) << setfill(' ') << ' ';
+
+	for (int i = 0; i < data[0].size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+	}
+	out << endl;
+
+	for (int i = 0; i < data.size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			out << setw(8) << setfill(' ') << data[i][j].border;
+		}
+		out << endl;
+	}
+	out.close();
+}
+void ModelCells::PrintCellBordersz(char* name)
+{
+	ofstream out(name);
+
+	out << setw(8) << setprecision(1) << setfill(' ') << ' ';
+
+	for (int i = 0; i < data[0].size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+	}
+	out << endl;
+
+	for (int i = 0; i < data.size(); i++)
+	{
+		out << setw(8) << setprecision(1) << setfill(' ') << i;
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			out << setw(8) << setfill(' ') << data[i][j].borderz;
+		}
+		out << endl;
+	}
+	out.close();
+}
+
+vector<vector<ModelCells::CellType>> ModelCells::GetCellsTypes()
+{
+	vector<vector<CellType>> res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].type;
+		}
+	}
+	return res;
+}
+
+void ModelCells::Create(ModelCellsParams& p)
+{
+	p.wj += 3;
+	p.hj += 3;
+	this->p = p;
+	data.resize(p.hj + 5 + 2 * p.d);
+	for (int i = 0; i < data.size(); i++)
+	{
+		data[i].resize(2 * p.d + p.wj);
+	}
+	PresetT();
+	SetMaterial();
+	SetBorders();
+	SetABC();
+	SetP0();
+	PrintCellType("cell types.txt");
+}
+
+vector<vector<double>> ModelCells::GetA()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].A;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetB()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].B;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetC()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].C;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetD()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].D;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetAz()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].Az;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetBz()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].Bz;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetCz()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].Cz;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetDz()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].Dz;
+		}
+	}
+	return res;
+}
+
+vector<vector<double>> ModelCells::GetT()
+{
+	vector<vector<double>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			res[i][j] = data[i][j].T;
+		}
+	}
+	return res;
+}
+
+void ModelCells::SetT(vector<vector<double>>& ts)
+{
+	for (int i = 0; i < ts.size(); i++)
+	{
+		for (int j = 0; j < ts[i].size(); j++)
+		{
+			data[i][j].T = ts[i][j];
+		}
+	}
+}
+
+void ModelCells::CalcD()
+{
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (!data[i][j].border)D1(i, j);
+		}
+	}
+}
+
+void ModelCells::CalcDz()
+{
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (!data[i][j].borderz)D2(i, j);
+		}
+	}
+}
+
+int ModelCells::GetHeight()
+{
+	return data.size();
+}
+
+int ModelCells::GetWidth()
+{
+	return data[0].size();
+}
+
+
