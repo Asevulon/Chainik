@@ -160,7 +160,6 @@ private:
 	double t0 = 1;
 	double TT0 = 1;
 
-	CRITICAL_SECTION cs;
 	long long iteration = 0;
 	ModelCells mc;
 
@@ -173,6 +172,8 @@ protected:
 	void CalcHalfStepT();
 	void CalcHalfStepTz();
 public:
+	CRITICAL_SECTION cs;
+
 	Model();
 	~Model();
 	void main();

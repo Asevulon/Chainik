@@ -97,8 +97,11 @@ HCURSOR MyDlg::OnQueryDragIcon()
 void MyDlg::OnBnClickedOk()
 {
 	// TODO: добавьте свой код обработчика уведомлений
+	EnterCriticalSection(&m.cs);
 	TerminateThread(ModelThread, 0);
-	m.SetParams(50, 50, 50, 50, 20, 0.56, 80.4, 80.4, 300, 5000, 9e-8, 1e-4, 460, 460, 4200);
+	LeaveCriticalSection(&m.cs);
+
+	m.SetParams(50, 50, 50, 50, 20, 0.56, 80.4, 80.4, 300, 5000,5.8e-8, 1e-4, 460, 460, 4200);
 	ModelThread = CreateThread(NULL, NULL, ModelThreadFunc, this, NULL, NULL);
 	KillTimer(timerid);
 	timerid = SetTimer(100, 16, NULL);

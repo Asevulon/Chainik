@@ -96,7 +96,7 @@ void Model::CalcHalfStepT()
 	for (int i = 1; i < imax - 1; i++)
 	{
 		data[i][jmax - 1] = (muN * betta[i][jmax - 1] + nuN) / (1 - muN * alpha[i][jmax - 1]);
-		for (int j = jmax - 2; j > 0; j--)
+		for (int j = jmax - 2; j > 1; j--)
 		{
 			data[i][j - 1] = alpha[i][j] * data[i][j] + betta[i][j];
 		}
@@ -115,7 +115,7 @@ void Model::CalcHalfStepTz()
 	for (int j = 1; j < jmax - 1; j++)
 	{
 		data[imax -1][j] = (muN * bettaz[imax - 1][j] + nuN) / (1 - muN * alphaz[imax - 1][j]);
-		for (int i = imax - 2; i > 0; i--)
+		for (int i = imax - 2; i > 1; i--)
 		{
 			data[i - 1][j] = alphaz[i][j] * data[i][j] + bettaz[i][j];
 		}
@@ -293,7 +293,7 @@ void ModelCells::SetMaterial()
 			data[i][j].type = metall;
 		}
 	}
-	data[backup - 3][p.wj].type = metall;
+	//data[backup - 3][p.wj].type = metall;
 
 	i = backup;
 	backup = imax;
@@ -315,7 +315,7 @@ void ModelCells::SetMaterial()
 			data[i][j].type = metall;
 		}
 	}
-	data[backup - 1][p.wj].type = metall;
+	//data[backup - 1][p.wj].type = metall;
 }
 
 void ModelCells::SetBorders()
@@ -323,7 +323,7 @@ void ModelCells::SetBorders()
 
 	for (int i = 1; i < data.size() - 1; i++)
 	{
-		for (int j = 1; j < p.wn + 2; j++)
+		for (int j = 1; j < data[i].size() - 1; j++)
 		{
 			if (data[i][j - 1].type == none)
 			{
@@ -334,7 +334,7 @@ void ModelCells::SetBorders()
 			else data[i][j].border = false;
 		}
 	}
-	for (int i = 1; i < data.size() - 1; i++)
+	/*for (int i = 1; i < data.size() - 1; i++)
 	{
 		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
 		{
@@ -346,7 +346,7 @@ void ModelCells::SetBorders()
 			if (data[i][j].type != data[i][j + 1].type)data[i][j].border = true;
 			else data[i][j].border = false;
 		}
-	}
+	}*/
 	
 	int half = p.hn / 2 + p.d + 4;
 	for (int j = 1; j < data[0].size() - 1; j++)
@@ -358,7 +358,10 @@ void ModelCells::SetBorders()
 				data[i][j].borderz = false;
 				continue;
 			}
-			if (data[i][j].type != data[i + 1][j].type)data[i][j].borderz = true;
+			if (data[i][j].type != data[i + 1][j].type)
+			{
+				data[i][j].borderz = true;
+			}
 			else data[i][j].borderz = false;
 		}
 	}
@@ -372,10 +375,36 @@ void ModelCells::SetBorders()
 				data[i][j].borderz = false;
 				continue;
 			}
-			if (data[i][j].type != data[i - 1][j].type)data[i][j].borderz = true;
+			if (data[i][j].type != data[i - 1][j].type)
+			{
+				data[i][j].borderz = true;
+			}
 			else data[i][j].borderz = false;
 		}
 	}
+
+	for (int j = 1; j < p.wn; j++)
+	{
+		data[p.d + 3][j].borderz = false;
+		data[p.d + 4][j].borderz = true;
+
+		data[p.d + 3 + p.hn][j].borderz = true;
+		data[p.d + 4 + p.hn][j].borderz = false;
+	}
+	data[p.d + 3][p.wn].borderz = false;
+	data[p.d + 4 + p.hn][p.wn].borderz = false;
+
+	for (int i = p.d + 3; i < p.d + 4 + p.hn; i++)
+	{
+		data[i][p.wn].border = true;
+		data[i][p.wn + 1].border = false;
+	}
+	data[p.d + 3][p.wn].border = false;
+	data[p.d + 4][p.wn].border = false;
+	data[p.d + 3 + p.hn][p.wn].border = false;
+
+	data[p.d + 4][p.wn].type = liquid;
+	data[p.d + 3 + p.hn][p.wn].type = liquid;
 }
 
 void ModelCells::SetP0()
@@ -386,7 +415,7 @@ void ModelCells::SetP0()
 		P[i].resize(data[i].size());
 		for (int j = 0; j < data[i].size(); j++)
 		{
-			if (data[i][j].type == heater)P[i][j] = p.P0;
+			if ((data[i][j].type == heater) && (!data[i][j].border) && (!data[i][j].borderz)) P[i][j] = p.P0;
 		}
 	}
 }
@@ -396,25 +425,6 @@ void ModelCells::SetABC()
 	for (int i = 1; i < data.size() - 1; i++)
 	{
 		for (int j = 1; j < p.wn + 2; j++)
-		{
-			if (data[i][j].border)
-			{
-				data[i][j].A = Getk(i, j - 1);
-				data[i][j].B = Getk(i, j);
-				data[i][j].C = -data[i][j].A - data[i][j].B;
-				data[i][j].D = 0;
-			}
-			else
-			{
-				A1(i, j);
-				B1(i, j);
-				C1(i, j);
-			}
-		}
-	}
-	for (int i = 1; i < data.size() - 1; i++)
-	{
-		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
 		{
 			if (data[i][j].border)
 			{
@@ -431,9 +441,28 @@ void ModelCells::SetABC()
 			}
 		}
 	}
+	for (int i = 1; i < data.size() - 1; i++)
+	{
+		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].border)
+			{
+				data[i][j].A = Getk(i, j - 1);
+				data[i][j].B = Getk(i, j);
+				data[i][j].C = -data[i][j].A - data[i][j].B;
+				data[i][j].D = 0;
+			}
+			else
+			{
+				A1(i, j);
+				B1(i, j);
+				C1(i, j);
+			}
+		}
+	}
 
-	int half = p.hn / 2 + p.d + 4;
-	for (int i = 1; i < half; i++)
+	int fst = p.d + 1;
+	for (int i = 1; i < fst; i++)
 	{
 		for (int j = 1; j < data[i].size() - 1; j++)
 		{
@@ -453,7 +482,8 @@ void ModelCells::SetABC()
 		}
 	}
 
-	for (int i = half ; i < data.size() - 1; i++)
+	int half = p.hn / 2 + p.d + 4;
+	for (int i = fst; i < half; i++)
 	{
 		for (int j = 1; j < data[i].size() - 1; j++)
 		{
@@ -472,6 +502,48 @@ void ModelCells::SetABC()
 			}
 		}
 	}
+	int snd = half + p.hn / 2 + 2;
+	for (int i = half ; i < snd; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].borderz)
+			{
+				data[i][j].Az = Getk(i, j);
+				data[i][j].Bz = Getk(i + 1, j);
+				data[i][j].Cz = -data[i][j].Az - data[i][j].Bz;
+				data[i][j].Dz = 0;
+			}
+			else
+			{
+				A2(i, j);
+				B2(i, j);
+				C2(i, j);
+			}
+		}
+	}
+
+	for (int i = snd; i < data.size() - 1; i++)
+	{
+		for (int j = 1; j < data[i].size() - 1; j++)
+		{
+			if (data[i][j].borderz)
+			{
+				data[i][j].Az = Getk(i - 1, j);
+				data[i][j].Bz = Getk(i, j);
+				data[i][j].Cz = -data[i][j].Az - data[i][j].Bz;
+				data[i][j].Dz = 0;
+			}
+			else
+			{
+				A2(i, j);
+				B2(i, j);
+				C2(i, j);
+			}
+		}
+	}
+
+	
 }
 
 inline void ModelCells::A1(int i, int j)
