@@ -96,7 +96,7 @@ void Model::CalcHalfStepT()
 	for (int i = 1; i < imax - 1; i++)
 	{
 		data[i][jmax - 1] = (muN * betta[i][jmax - 1] + nuN) / (1 - muN * alpha[i][jmax - 1]);
-		for (int j = jmax - 2; j > 1; j--)
+		for (int j = jmax - 2; j > 0; j--)
 		{
 			data[i][j - 1] = alpha[i][j] * data[i][j] + betta[i][j];
 		}
@@ -115,7 +115,7 @@ void Model::CalcHalfStepTz()
 	for (int j = 1; j < jmax - 1; j++)
 	{
 		data[imax -1][j] = (muN * bettaz[imax - 1][j] + nuN) / (1 - muN * alphaz[imax - 1][j]);
-		for (int i = imax - 2; i > 1; i--)
+		for (int i = imax - 2; i > 0; i--)
 		{
 			data[i - 1][j] = alphaz[i][j] * data[i][j] + bettaz[i][j];
 		}
