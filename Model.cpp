@@ -4,32 +4,12 @@
 
 void Model::InitInstance()
 {
+	mc.InitInstance();
 	psi = ka / dr;
 	muN = 1;
 	nuN = 0;
-
-	Omega = 1;
-	Omegam = km * t0 / cvm / L0 / L0;
-	Omegaj = kj * t0 / cvj / L0 / L0;
-	Omegan = kn * t0 / cvn / L0 / L0;
-
-	ModelCellsParams p;
-	p.d = d;
-	p.hj = hj;
-	p.hn = hn;
-	p.kj = kj;
-	p.km = km;
-	p.kn = kn;
-	p.wj = wj;
-	p.wn = wn;
-	p.Omegaj = Omegaj;
-	p.Omegam = Omegam;
-	p.Omegan = Omegan;
-	p.T = T0;
-	p.dr = dr;
-	p.dt = dt;
-	p.P0 = P0;
-	mc.Create(p);
+	mu0 = 1;
+	nu0 = 0;
 
 	imax = mc.GetHeight();
 	jmax = mc.GetWidth();
@@ -60,12 +40,18 @@ void Model::InitInstance()
 	print(Bz, "Bz");
 	print(Cz, "Cz");
 	print(Dz, "Dz");
+	CalcAlphaBetta();
+	CalcAlphaBettaz();
+	print(alpha, "alpha");
+	print(alphaz, "alphaz");
+	print(betta, "betta");
+	print(bettaz, "bettaz");
 
 }
 
 void Model::CalcAlphaBetta()
 {
-	for (int i = 1; i < imax - 1; i++)
+	/*for (int i = 1; i < imax - 1; i++)
 	{
 		alpha[i][1] = mu0;
 		betta[i][1] = nu0;
@@ -73,6 +59,16 @@ void Model::CalcAlphaBetta()
 		{
 			alpha[i][j] = -B[i][j - 1] / (C[i][j - 1] + A[i][j - 1] * alpha[i][j - 1]);
 			betta[i][j] = (D[i][j - 1] - A[i][j - 1] * betta[i][j - 1]) / (C[i][j - 1] + A[i][j - 1] * alpha[i][j - 1]);
+		}
+	}*/
+	for (int i = 1; i < imax - 1; i++)
+	{
+		alpha[i][1] = mu0;
+		betta[i][1] = nu0;
+		for (int j = 2; j < jmax; j++)
+		{
+			alpha[i][j] = -B[i][j - 1] / (A[i][j - 1] * alpha[i][j - 1] + C[i][j - 1]);
+			betta[i][j] = (D[i][j - 1] - A[i][j - 1] * betta[i][j - 1])/ (A[i][j - 1] * alpha[i][j - 1] + C[i][j - 1]);
 		}
 	}
 }
@@ -85,8 +81,8 @@ void Model::CalcAlphaBettaz()
 		bettaz[1][j] = nuN;
 		for (int i = 2; i < imax; i++)
 		{
-			alphaz[i][j] = -Bz[i - 1][j] / (Cz[i - 1][j] + Az[i - 1][j] * alphaz[i - 1][j]);
-			bettaz[i][j] = (Dz[i - 1][j] - Az[i - 1][j] * bettaz[i - 1][j]) / (Cz[i - 1][j] + Az[i - 1][j] * alphaz[i - 1][j]);
+			alphaz[i][j] = -Bz[i - 1][j] / (Az[i - 1][j] * alphaz[i - 1][j] + Cz[i - 1][j]);
+			bettaz[i][j] = (Dz[i - 1][j] - Az[i - 1][j] * bettaz[i - 1][j]) / (Az[i - 1][j] * alphaz[i - 1][j] + Cz[i - 1][j]);
 		}
 	}
 }
@@ -103,10 +99,10 @@ void Model::CalcHalfStepT()
 		data[i][0] = mu0 * data[i][1] + nu0;
 	}
 
-	data[0][0] = mu0 * data[0][1] + nu0;
+	/*data[0][0] = mu0 * data[0][1] + nu0;
 	data[imax - 1][0] = mu0 * data[imax - 1][1] + nu0;
 	data[0][jmax - 1] = muN * data[0][jmax - 2] + nuN;
-	data[imax - 1][jmax - 1] = muN * data[imax - 1][jmax - 2] + nuN;
+	data[imax - 1][jmax - 1] = muN * data[imax - 1][jmax - 2] + nuN;*/
 
 }
 
@@ -121,10 +117,10 @@ void Model::CalcHalfStepTz()
 		}
 		data[0][j] = muN * data[1][j] + nuN;
 	}
-	data[0][0] = muN * data[1][0] + nuN;
+	/*data[0][0] = muN * data[1][0] + nuN;
 	data[imax - 1][0] = muN * data[imax - 2][0] + nuN;
 	data[0][jmax - 1] = muN * data[1][jmax - 1] + nuN;
-	data[imax - 1][jmax - 1] = muN * data[imax - 2][jmax - 1] + nuN;
+	data[imax - 1][jmax - 1] = muN * data[imax - 2][jmax - 1] + nuN;*/
 }
 
 Model::Model()
@@ -172,25 +168,6 @@ void Model::main()
 	
 }
 
-void Model::SetParams(int hn, int wn, int hj, int wj, int d, double kj, double kn, double km, double T, double P, double dt, double dr, double cvm, double cvn, double cvj)
-{
-	this->hn = hn;
-	this->wn = wn;
-	this->hj = hj;
-	this->wj = wj;
-	this->d = d;
-	this->kj = kj;
-	this->kn = kn;
-	this->km = km;
-	this->T0 = T;
-	this->dt = dt;
-	this->dr = dr;
-	this->cvm = cvm;
-	this->cvj = cvj;
-	this->cvn = cvn;
-	this->P0 = P / cvn;
-
-}
 
 vector<vector<double>> Model::GetData()
 {
@@ -200,17 +177,9 @@ vector<vector<double>> Model::GetData()
 	return res;
 }
 
-void Model::MakeStartVals()
+void Model::SetModelCells(ModelCells& mcs)
 {
-	data.resize(imax);
-	for (int i = 0; i < imax; i++)
-	{
-		data[i].resize(jmax);
-		for (int j = 0; j < jmax; j++)
-		{
-			data[i][j] = T0;
-		}
-	}
+	mc = mcs;
 }
 
 
@@ -248,7 +217,7 @@ void print(vector<vector<double>>& data, char* filename)
 		of << setw(8) << setprecision(1) << setfill(' ') << i;
 		for (int j = 0; j < data[i].size(); j++)
 		{
-			of << setw(8) << setprecision(1) << setfill(' ') << fixed << data[i][j];
+			of << setw(8) << setprecision(2) << setfill(' ') << fixed << data[i][j];
 		}
 		of << endl;
 	}
@@ -268,143 +237,55 @@ void ModelCells::PresetT()
 
 void ModelCells::SetMaterial()
 {
-	int i = 1;
-	int imax = i + p.d;
-	for (; i < imax; i++)
+	for (int i = 0; i < p.d + 1; i++)
 	{
-		for (int j = 1; j < data[i].size() - 1; j++)
+		for (int j = 0; j < data[i].size(); j++)
 		{
 			data[i][j].type = metall;
 		}
 	}
 
-
-	int backup = i + 3;
-	imax += p.hj + 3;
-
-	for (; i < imax; i++)
+	for (int i = p.d + 1; i < p.d + p.hj; i++)
 	{
-		for (int j = 1; j < p.wj + 1; j++)
+		for (int j = 0; j < p.wj + 1; j++)
 		{
 			data[i][j].type = liquid;
 		}
-		for (int j = p.wj + 1; j < data[i].size() - 1; j++)
+	}
+	
+	for (int i = p.d + 1; i < p.d + p.hj; i++)
+	{
+		for (int j = p.wj + 1; j < data[i].size(); j++)
 		{
 			data[i][j].type = metall;
 		}
 	}
-	//data[backup - 3][p.wj].type = metall;
 
-	i = backup;
-	backup = imax;
-	imax = i + p.hn;
-	for (; i < imax; i++)
+	for (int i = p.d + p.hj; i < 2 * p.d + p.hj; i++)
 	{
-		for (int j = 1; j < p.wn + 1; j++)
-		{
-			data[i][j].type = heater;
-		}
-	}
-
-	i = backup;
-	imax = i + p.d;
-	for (; i < imax; i++)
-	{
-		for (int j = 1; j < data[i].size() - 1; j++)
+		for (int j = 0; j < data[i].size(); j++)
 		{
 			data[i][j].type = metall;
 		}
 	}
-	//data[backup - 1][p.wj].type = metall;
 }
 
 void ModelCells::SetBorders()
 {
-
-	for (int i = 1; i < data.size() - 1; i++)
+	for (int j = 1; j < p.wj + 1; j++)
 	{
-		for (int j = 1; j < data[i].size() - 1; j++)
-		{
-			if (data[i][j - 1].type == none)
-			{
-				data[i][j].border = false;
-				continue;
-			}
-			if (data[i][j].type != data[i][j - 1].type)data[i][j].border = true;
-			else data[i][j].border = false;
-		}
-	}
-	/*for (int i = 1; i < data.size() - 1; i++)
-	{
-		for (int j = p.wn + 2; j < data[i].size() - 1; j++)
-		{
-			if (data[i][j + 1].type == none)
-			{
-				data[i][j].border = false;
-				continue;
-			}
-			if (data[i][j].type != data[i][j + 1].type)data[i][j].border = true;
-			else data[i][j].border = false;
-		}
-	}*/
-	
-	int half = p.hn / 2 + p.d + 4;
-	for (int j = 1; j < data[0].size() - 1; j++)
-	{
-		for (int i = 2; i < half; i++)
-		{
-			if (data[i + 1][j].type == none)
-			{
-				data[i][j].borderz = false;
-				continue;
-			}
-			if (data[i][j].type != data[i + 1][j].type)
-			{
-				data[i][j].borderz = true;
-			}
-			else data[i][j].borderz = false;
-		}
+		data[p.d][j].borderz = true;
 	}
 
-	for (int j = 1; j < data[0].size() - 1; j++)
+	for (int j = 1; j < p.wj + 1; j++)
 	{
-		for (int i = half; i < data.size() - 1; i++)
-		{
-			if (data[i - 1][j].type == none)
-			{
-				data[i][j].borderz = false;
-				continue;
-			}
-			if (data[i][j].type != data[i - 1][j].type)
-			{
-				data[i][j].borderz = true;
-			}
-			else data[i][j].borderz = false;
-		}
+		data[p.d + p.hj][j].borderz = true;
 	}
 
-	for (int j = 1; j < p.wn; j++)
+	for (int i = p.d + 1; i < p.d + p.hj; i++)
 	{
-		data[p.d + 3][j].borderz = false;
-		data[p.d + 4][j].borderz = true;
-
-		data[p.d + 3 + p.hn][j].borderz = true;
-		data[p.d + 4 + p.hn][j].borderz = false;
+		data[i][p.wj + 1].border = true;
 	}
-	data[p.d + 3][p.wn].borderz = false;
-	data[p.d + 4 + p.hn][p.wn].borderz = false;
-
-	for (int i = p.d + 3; i < p.d + 4 + p.hn; i++)
-	{
-		data[i][p.wn].border = true;
-		data[i][p.wn + 1].border = false;
-	}
-	data[p.d + 3][p.wn].border = false;
-	data[p.d + 4][p.wn].border = false;
-	data[p.d + 3 + p.hn][p.wn].border = false;
-
-	data[p.d + 4][p.wn].type = liquid;
-	data[p.d + 3 + p.hn][p.wn].type = liquid;
 }
 
 void ModelCells::SetP0()
@@ -415,14 +296,14 @@ void ModelCells::SetP0()
 		P[i].resize(data[i].size());
 		for (int j = 0; j < data[i].size(); j++)
 		{
-			if ((data[i][j].type == heater) && (!data[i][j].border) && (!data[i][j].borderz)) P[i][j] = p.P0;
+			if (data[i][j].type == heater) P[i][j] = p.P0;
 		}
 	}
 }
 
 void ModelCells::SetABC()
 {
-	for (int i = 1; i < data.size() - 1; i++)
+	/*for (int i = 1; i < data.size() - 1; i++)
 	{
 		for (int j = 1; j < p.wn + 2; j++)
 		{
@@ -541,9 +422,42 @@ void ModelCells::SetABC()
 				C2(i, j);
 			}
 		}
-	}
+	}*/
 
-	
+for (int i = 1; i < data.size() - 1; i++)
+{
+	for (int j = 1; j < data[i].size() - 1; j++)
+	{
+		if (data[i][j].border)
+		{
+			data[i][j].A = Getk(i, j - 1);
+			data[i][j].B = Getk(i, j + 1);
+			data[i][j].C = -data[i][j].A - data[i][j].B;
+			data[i][j].D = 0;
+		}
+		else
+		{
+			A1(i, j);
+			B1(i, j);
+			C1(i, j);
+		}
+
+		if (data[i][j].borderz)
+		{
+			data[i][j].Az = Getk(i - 1, j);
+			data[i][j].Bz = Getk(i + 1, j);
+			data[i][j].Cz = -data[i][j].Az - data[i][j].Bz;
+			data[i][j].Dz = 0;
+		}
+		else
+		{
+			A2(i, j);
+			B2(i, j);
+			C2(i, j);
+		}
+	}
+}
+
 }
 
 inline void ModelCells::A1(int i, int j)
@@ -701,7 +615,7 @@ void ModelCells::PrintCellBordersz(char* name)
 	out.close();
 }
 
-vector<vector<ModelCells::CellType>> ModelCells::GetCellsTypes()
+vector<vector<CellType>> ModelCells::GetCellsTypes()
 {
 	vector<vector<CellType>> res;
 	res.resize(data.size());
@@ -718,20 +632,18 @@ vector<vector<ModelCells::CellType>> ModelCells::GetCellsTypes()
 
 void ModelCells::Create(ModelCellsParams& p)
 {
-	p.wj += 3;
-	p.hj += 3;
+	if (created)return;
+	created = true;
+	p.wj;
+	p.hj;
 	this->p = p;
-	data.resize(p.hj + 5 + 2 * p.d);
+	data.resize(p.hj + 2 * p.d);
 	for (int i = 0; i < data.size(); i++)
 	{
-		data[i].resize(2 * p.d + p.wj);
+		data[i].resize(p.d + p.wj);
 	}
-	PresetT();
 	SetMaterial();
 	SetBorders();
-	SetABC();
-	SetP0();
-	PrintCellType("cell types.txt");
 }
 
 vector<vector<double>> ModelCells::GetA()
@@ -910,6 +822,53 @@ int ModelCells::GetHeight()
 int ModelCells::GetWidth()
 {
 	return data[0].size();
+}
+
+vector<vector<DrawerParamsInfo>> ModelCells::GetDrawerData()
+{
+	vector<vector<DrawerParamsInfo>>res;
+	res.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		res[i].resize(data[i].size());
+		for (int j = 0; j < data[i].size(); j++)
+		{
+			DrawerParamsInfo info;
+			info.type = data[i][j].type;
+			info.border = data[i][j].border;
+			info.borderz = data[i][j].borderz;
+			res[i][j] = info;
+		}
+	}
+	return res;
+}
+
+void ModelCells::SetCellMaterial(int i, int j, CellType ct)
+{
+	data[i][j].type = ct;
+	data[i][j].border = false;
+	data[i][j].borderz = false;
+}
+
+void ModelCells::SetCellType(int i, int j, bool border, bool borderz)
+{
+	data[i][j].border = border;
+	data[i][j].borderz = borderz;
+}
+
+void ModelCells::SetParams(ModelCellsParams& p)
+{
+	this->p = p;
+}
+
+void ModelCells::InitInstance()
+{
+	PresetT();
+	SetP0();
+	SetABC();
+
+	print(P, "P");
+	print(GetT(), "data");
 }
 
 

@@ -101,7 +101,10 @@ void MyDlg::OnBnClickedOk()
 	TerminateThread(ModelThread, 0);
 	LeaveCriticalSection(&m.cs);
 
-	m.SetParams(50, 50, 50, 50, 20, 0.56, 80.4, 80.4, 300, 5000,5.8e-8, 1e-4, 460, 460, 4200);
+	pdlg.m = &m;
+	if (pdlg.DoModal() != IDOK)return;
+
+	
 	ModelThread = CreateThread(NULL, NULL, ModelThreadFunc, this, NULL, NULL);
 	KillTimer(timerid);
 	timerid = SetTimer(100, 16, NULL);

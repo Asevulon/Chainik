@@ -186,10 +186,12 @@
     <ClInclude Include="Chainik.h" />
     <ClInclude Include="Drawer.h" />
     <ClInclude Include="Drawer3D.h" />
+    <ClInclude Include="DrawerParams.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="MyDlg.h" />
     <ClInclude Include="OpenGlDlg.h" />
+    <ClInclude Include="ParamsDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -198,9 +200,11 @@
     <ClCompile Include="Chainik.cpp" />
     <ClCompile Include="Drawer.cpp" />
     <ClCompile Include="Drawer3D.cpp" />
+    <ClCompile Include="DrawerParams.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="MyDlg.cpp" />
     <ClCompile Include="OpenGlDlg.cpp" />
+    <ClCompile Include="ParamsDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

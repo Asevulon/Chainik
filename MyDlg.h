@@ -5,7 +5,7 @@
 #pragma once
 #include"Drawer.h"
 #include"OpenGlDlg.h"
-#include"Model.h"
+#include"ParamsDlg.h"
 // Диалоговое окно MyDlg
 class MyDlg : public CDialogEx
 {
@@ -45,6 +45,7 @@ public:
 	OpenGlDlg dlg3d;
 	HANDLE ModelThread;
 	Model m;
+	ParamsDlg pdlg;
 };
 
 DWORD WINAPI ModelThreadFunc(LPVOID p);

@@ -2,13 +2,17 @@
 #include<vector>
 using namespace std;
 
-
+enum CellType
+{
+	metall,
+	heater,
+	liquid,
+	none
+};
 struct ModelCellsParams
 {
 	int hj = 0;
 	int wj = 0;
-	int hn = 0;
-	int wn = 0;
 	int d = 0;
 
 	double kj = 0;
@@ -25,17 +29,18 @@ struct ModelCellsParams
 
 	double P0;
 };
+
+struct DrawerParamsInfo
+{
+	CellType type = none;
+	bool borderz = false;
+	bool border = false;
+};
 class ModelCells
 {
 private:
 	
-	enum CellType
-	{
-		metall,
-		heater,
-		liquid,
-		none
-	};
+	
 	struct Cell
 	{
 		double A = 0;
@@ -59,6 +64,8 @@ private:
 	ModelCellsParams p;
 	vector<vector<Cell>>data;
 	vector<vector<double>>P;
+
+	bool created = false;
 protected:
 	void PresetT();
 	void SetMaterial();
@@ -98,6 +105,12 @@ public:
 
 	int GetHeight();
 	int GetWidth();
+
+	vector<vector<DrawerParamsInfo>> GetDrawerData();
+	void SetCellMaterial(int i, int j, CellType ct);
+	void SetCellType(int i, int j, bool border, bool borderz);
+	void SetParams(ModelCellsParams&p);
+	void InitInstance();
 };
 
 
@@ -164,7 +177,6 @@ private:
 	ModelCells mc;
 
 protected:
-	void MakeStartVals();
 	void ResizeAlphaBetta();
 	void InitInstance();
 	void CalcAlphaBetta();
@@ -178,74 +190,9 @@ public:
 	~Model();
 	void main();
 	bool Continue;
-	void SetParams(int hn, int wn, int hj, int wj, int d, double kj, double kn, double km, double T, double P, double dt, double dr, double cvm, double cvn, double cvj);
 	vector<vector<double>>GetData();
+	void SetModelCells(ModelCells& mcs);
 };
 
 void print(vector<vector<double>>& data, char* filename);
-
-/*
-модель:
-граница не входит в толщину
-получаетс€ така€ штука
-
-//граница металла и атмосферы/////////  - не входит в толщину металла
-//металл//////////////////////////////
-//металл//////////////////////////////
-//граница металлa и воды//////////////  - не входит в толщину металла
-~~вода~~~~~~~~~~~~~~~~~~~~~~~~~~~~////
-~~вода~~~~~~~~~~~~~~~~~~~~~~~~~~~~////
-~~вода~~~~~~~~~~~~~~~~~~~~~~~~~~~~////
-~~вода~~~~~~~~~~~~~~~~~~~~~~~~~~~~////
-~~вода~~~~~~~~~~~~~~~~~~~~~~~~~~~~////
-||граница нагревател€ и воды||~~~~////
-||нагреватель|||||||||||||||||~~~~////
-||нагреватель|||||||||||||||||~~~~////
-||нагреватель|||||||||||||||||~~~~////
-//граница нагревател€ и металла///////  - не входит в толщину металла
-//металл//////////////////////////////
-//металл//////////////////////////////
-//граница металла и атмосферы/////////  - не входит в толщину металла
-
-
-итого всего отсчетов:
-	по высоте:
-		если hn < hj
-		2 * d + hj + 5 
-		
-		то есть граничными отсчетами €вл€ютс€:
-		0,
-		d + 1,
-		d + hn + 2,
-		d + hj + 3,
-		2 * d + hj + 4
-
-		если hn = hj
-		2 * d + hj + 4
-		то есть граничными отсчетами €вл€ютс€:
-		0,
-		d + 1,
-		d + hn + 2,
-		2 * d + hn + 3
-
-	по ширине:
-		если wn < wj
-		wj + d + 2
-
-		то есть граничными отсчетами €вл€ютс€:
-		0, 
-		wn + 1,
-		wj + 1
-		wj + d + 1
-		
-		если wj = wn
-		wj + d + 2
-
-		то есть граничными отсчетами €вл€ютс€:
-		0,
-		wn + 1
-		wn + d + 2
-*/
-
-
 
