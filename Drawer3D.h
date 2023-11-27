@@ -44,13 +44,13 @@ private:
 	CPoint p, p2;
 	UINT_PTR timerid;
 
-	double scale = 2;
+	double scale = 1;
 public:
 	Drawer3D();
 	virtual ~Drawer3D();
 
 protected:
-	
+	void AllColorsToGlRange();
 	inline m_Color GetColor(double val);
 	DECLARE_MESSAGE_MAP()
 public:
@@ -69,6 +69,7 @@ public:
 	double ry = 0;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+
 };
 
 

@@ -73,9 +73,9 @@ BOOL ParamsDlg::OnInitDialog()
 	drw.SetPadding(10, 5, 22, 22);
 	drw.Invalidate();
 
+	MatType.InsertString(-1, L"Нагреватель");
 	MatType.InsertString(-1, L"Металл");
 	MatType.InsertString(-1, L"Жидкость");
-	MatType.InsertString(-1, L"Нагреватель");
 	MatType.SetCurSel(0);
 
 	CBCellType.InsertString(-1, L"Материал");
@@ -128,6 +128,7 @@ LRESULT ParamsDlg::OnMsCellChange(WPARAM wParam, LPARAM lParam)
 void ParamsDlg::OnBnClickedOk()
 {
 	// TODO: добавьте свой код обработчика уведомлений
+	UpdateData();
 	out.dr = dr;
 	out.dt = dt;
 

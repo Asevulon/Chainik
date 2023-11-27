@@ -39,7 +39,7 @@ END_MESSAGE_MAP()
 
 
 
-
+#include<thread>
 void Drawer::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	Graphics ToWindow(lpDrawItemStruct->hDC);
@@ -55,6 +55,13 @@ void Drawer::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		return;
 	}
 
+	thread* linesthread = nullptr;
+	bool joinable = false;
+	if (!eqz)
+	{
+		linesthread = new thread([this]() {CreateLines(); });
+		joinable = true;
+	}
 	gr.SetSmoothingMode(SmoothingModeAntiAlias);
 	double actWidth(right - left);
 	double actHeight(top - bot);
@@ -183,6 +190,23 @@ void Drawer::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		gr.DrawString(str, str.GetLength() + 1, &font, strp, &brush);
 	}
 
+	if(joinable)
+	linesthread->join();
+	
+	for (auto& line : lines)
+	{
+		PointF p1(line[0].first, line[0].second);
+		matr.TransformPoints(&p1);
+		for (int i = 1; i < line.size(); i++)
+		{
+			PointF p2(line[i].first, line[i].second);
+			matr.TransformPoints(&p2);
+			gr.DrawLine(&blackpen, p1, p2);
+			p1 = p2;
+		}
+	}
+	delete linesthread;
+
 	ToWindow.DrawImage(&bmp, 0, 0);
 }
 
@@ -201,7 +225,13 @@ void Drawer::SetData(std::vector<std::vector<double>>& in)
 	}
 	zmax = *max_element(Max.begin(), Max.end());
 	zmin = *min_element(Min.begin(), Min.end());
-	if (zmax == zmin)zmax++;
+	if (zmax == zmin)
+	{
+		zmax++;
+		eqz = true;
+	}
+	else eqz = false;
+
 	outzmax = zmax;
 	outzmin = zmin;
 	
@@ -216,16 +246,17 @@ void Drawer::SetData(std::vector<std::vector<double>>& in)
 
 void Drawer::Normalize()
 {
-	double Norm = max(right, top) / max(fabs(zmax), fabs(zmin));
+	double Norm = max(right, top) / (zmax - zmin);
 	for (int i = 0; i < data.size(); i++)
 	{
 		for (int j = 0; j < data[i].size(); j++)
 		{
+			data[i][j] -= zmin;
 			data[i][j] *= Norm;
 		}
 	}
-	zmax *= Norm;
-	zmin *= Norm;
+	zmax = max(right, top);;
+	zmin = 0;
 }
 
 void Drawer::SetPadding(double lP, double rP, double tP, double bP)
@@ -276,6 +307,7 @@ inline m_Color Drawer::GetColor(double val)
 	double step = (zmax - zmin) / 9;
 	double start = zmin;
 	int i = 0;
+	if (val > zmax)val = zmax;
 	if (step != 0)
 	{
 		double ii = (val - zmin) / step;
@@ -308,3 +340,381 @@ inline void Drawer::MakeColorData()
 		}
 	}
 }
+
+pair<double, double> Drawer::CalcLinesDot(double val, int i1, int j1, int i2, int j2)
+{
+	double xc = max(j1,j2) - fabs(data[i2][j2] - val) * fabs(j2 - j1) / fabs(data[i2][j2] - data[i1][j1]);
+	double yc = max(i1,i2) - fabs(data[i2][j2] - val) * fabs(i2 - i1) / fabs(data[i2][j2] - data[i1][j1]);
+	return pair<double, double>(xc, yc);
+}
+
+void Drawer::CreateLines()
+{
+	lines.clear();
+	double step = (zmax - zmin) / linesnum;
+	double curval = zmin + 8 * step;
+	for (int k = 1; k < linesnum; k++)
+	{
+		curval = zmin + k * step;
+		vector<vector<bool>> linedata(data.size(), vector<bool>(data[0].size(), 0));
+
+		for (int i = 0; i < linedata.size() - 1; i++)
+		{
+			double b1 = 0;
+			double b2 = 0;
+			for (int j = 0; j < linedata[i].size() - 1; j++)
+			{
+				b1 = max(data[i][j], data[i][j + 1]);
+				b2 = min(data[i][j], data[i][j + 1]);
+				if ((curval <= b1) && (curval >= b2))
+				{
+					linedata[i][j] = true;
+				}
+				else
+				{
+					b1 = max(data[i][j], data[i + 1][j]);
+					b2 = min(data[i][j], data[i + 1][j]);
+					if ((curval <= b1) && (curval >= b2))
+					{
+						linedata[i][j] = true;
+					}
+					else
+					{
+						b1 = max(data[i + 1][j + 1], data[i][j + 1]);
+						b2 = min(data[i + 1][j + 1], data[i][j + 1]);
+						if ((curval <= b1) && (curval >= b2))
+						{
+							linedata[i][j] = true;
+						}
+						else
+						{
+							b1 = max(data[i + 1][j + 1], data[i + 1][j]);
+							b2 = min(data[i + 1][j + 1], data[i + 1][j]);
+							if ((curval <= b1) && (curval >= b2))
+							{
+								linedata[i][j] = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		auto line = MakeLine(linedata);
+		if (line.size() > 1)
+		{
+			lines.push_back(TransformLine(line, curval));
+		}
+	}
+
+}
+
+vector<pair<double, double>> Drawer::MakeLine(vector<vector<bool>>& linedata)
+{
+	vector<pair<double, double>>res;
+
+	int bi = 0;
+	int bj = 0;
+	for (int j = 0; j < linedata[0].size(); j++)
+	{
+		bool bend = false;
+		for (int i = 0; i < linedata.size(); i++)
+		{
+			if (linedata[i][j])
+			{
+				bend = true;
+				bi = i;
+				bj = j;
+				break;
+			}
+		}
+		if (bend)break;
+	}
+
+
+	int i = bi;
+	int j = bj;
+	while ((j >= 0) && (i >= 0) && (j < linedata[0].size()) && (i < linedata.size()))
+	{
+		res.push_back(pair<double, double>(j, i));
+		linedata[i][j] = false;
+		if ((j > 0) && (linedata[i][j - 1]))
+		{
+			j--;
+			continue;
+		}
+		if ((j < linedata[0].size() - 1) && (linedata[i][j + 1]))
+		{
+			j++;
+			continue;
+		}
+		if ((i > 0) && (linedata[i - 1][j]))
+		{
+			i--;
+			continue;
+		}
+		if ((i < linedata.size() - 1) && (linedata[i + 1][j]))
+		{
+			i++;
+			continue;
+		}
+		break;
+	}
+	return res;
+}
+
+vector<pair<double, double>> Drawer::TransformLine(vector<pair<double, double>>& ntline, double val)
+{
+	vector<pair<double, double>>res;
+	pair<double, double> l, t, b, r;
+
+	vector<pair<double, double>>temp;
+
+	if (FindIntersectionL(ntline[0].second, ntline[0].first, val, l))temp.push_back(l);
+	if (FindIntersectionR(ntline[0].second, ntline[0].first, val, r))temp.push_back(r);
+	if (FindIntersectionT(ntline[0].second, ntline[0].first, val, t))temp.push_back(t);
+	if (FindIntersectionB(ntline[0].second, ntline[0].first, val, b))temp.push_back(b);
+
+	if (temp[0].first < temp[1].first)
+	{
+		res.push_back(temp[0]);
+	}
+	else
+	{
+		res.push_back(temp[1]);
+	}
+	if (ntline.size() == 1)return res;
+
+	for (int i = 1; i < ntline.size(); i++)
+	{
+		temp.clear();
+		if (FindIntersectionL(ntline[i].second, ntline[i].first, val, l))temp.push_back(l);
+		if (FindIntersectionR(ntline[i].second, ntline[i].first, val, r))temp.push_back(r);
+		if (FindIntersectionT(ntline[i].second, ntline[i].first, val, t))temp.push_back(t);
+		if (FindIntersectionB(ntline[i].second, ntline[i].first, val, b))temp.push_back(b);
+		
+		if (temp[0].first < temp[1].first)
+		{
+			res.push_back(temp[0]);
+			res.push_back(temp[1]);
+		}
+		else
+		{
+			res.push_back(temp[1]);
+			res.push_back(temp[0]);
+		}
+	}
+	return res;
+}
+
+bool Drawer::FindIntersectionT(int i, int j, double val, pair<double, double>& out)
+{
+	double b1 = max(data[i + 1][j + 1], data[i + 1][j]);
+	double b2 = min(data[i + 1][j + 1], data[i + 1][j]);
+
+	if (!((val <= b1) && (val >= b2)))return false;
+	if (b1 == b2)
+	{
+		out.first = j;
+		out.second = i;
+		return true;
+	}
+	double xc = 0;
+	double yc = 0;
+	double x2 = 0;
+	double x1 = 0;
+	double T2 = 0;
+	double T1 = 0;
+	double y2 = 0;
+	double y1 = 0;
+	if (data[i + 1][j + 1] > data[i + 1][j])
+	{
+		x2 = j + 1;
+		x1 = j;
+
+		y2 = i + 1;
+		y1 = i + 1;
+		
+		T2 = data[i + 1][j + 1];
+		T1 = data[i + 1][j];
+	}
+	else
+	{
+		x1 = j + 1;
+		x2 = j;
+
+		y1 = i + 1;
+		y2 = i + 1;
+
+		T1 = data[i + 1][j];
+		T2 = data[i + 1][j + 1];
+	}
+	xc = CalcXc(x1, x2, T1, T2, val);
+	yc = CalcXc(y1, y2, T1, T2, val);
+	out.first = xc;
+	out.second = yc;
+	return true;
+}
+
+bool Drawer::FindIntersectionB(int i, int j, double val, pair<double, double>& out)
+{
+	double b1 = max(data[i][j + 1], data[i][j]);
+	double b2 = min(data[i][j + 1], data[i][j]);
+
+	if (!((val <= b1) && (val >= b2)))return false;
+	if (b1 == b2)
+	{
+		out.first = j;
+		out.second = i;
+		return true;
+	}
+	double xc = 0;
+	double yc = 0;
+	double x2 = 0;
+	double x1 = 0;
+	double T2 = 0;
+	double T1 = 0;
+	double y2 = 0;
+	double y1 = 0;
+	if (data[i][j + 1] > data[i][j])
+	{
+		x2 = j + 1;
+		x1 = j;
+
+		y2 = i;
+		y1 = i;
+
+		T2 = data[i][j + 1];
+		T1 = data[i][j];
+	}
+	else
+	{
+		x1 = j + 1;
+		x2 = j;
+
+		y1 = i;
+		y2 = i;
+
+		T1 = data[i][j];
+		T2 = data[i][j + 1];
+	}
+	xc = CalcXc(x1, x2, T1, T2, val);
+	yc = CalcXc(y1, y2, T1, T2, val);
+	out.first = xc;
+	out.second = yc;
+	return true;
+
+}
+
+bool Drawer::FindIntersectionL(int i, int j, double val, pair<double, double>& out)
+{
+	double b1 = max(data[i + 1][j], data[i][j]);
+	double b2 = min(data[i + 1][j], data[i][j]);
+
+	if (!((val <= b1) && (val >= b2)))return false;
+	if (b1 == b2)
+	{
+		out.first = j;
+		out.second = i;
+		return true;
+	}
+	double xc = 0;
+	double yc = 0;
+	double x2 = 0;
+	double x1 = 0;
+	double T2 = 0;
+	double T1 = 0;
+	double y2 = 0;
+	double y1 = 0;
+	if (data[i + 1][j] > data[i][j])
+	{
+		x2 = j;
+		x1 = j;
+
+		y2 = i + 1;
+		y1 = i;
+
+		T2 = data[i + 1][j];
+		T1 = data[i][j];
+	}
+	else
+	{
+		x1 = j;
+		x2 = j;
+
+		y1 = i + 1;
+		y2 = i;
+
+		T1 = data[i + 1][j];
+		T2 = data[i][j];
+	}
+	xc = CalcXc(x1, x2, T1, T2, val);
+	yc = CalcXc(y1, y2, T1, T2, val);
+	out.first = xc;
+	out.second = yc;
+	return true;
+
+}
+
+bool Drawer::FindIntersectionR(int i, int j, double val, pair<double, double>& out)
+{
+	double b1 = max(data[i + 1][j + 1], data[i][j + 1]);
+	double b2 = min(data[i + 1][j + 1], data[i][j + 1]);
+
+	if (!((val <= b1) && (val >= b2)))return false;
+	if (b1 == b2)
+	{
+		out.first = j;
+		out.second = i;
+		return true;
+	}
+
+	double xc = 0;
+	double yc = 0;
+	double x2 = 0;
+	double x1 = 0;
+	double T2 = 0;
+	double T1 = 0;
+	double y2 = 0;
+	double y1 = 0;
+	if (data[i + 1][j + 1] > data[i][j + 1])
+	{
+		x2 = j + 1;
+		x1 = j + 1;
+
+		y2 = i + 1;
+		y1 = i;
+
+		T2 = data[i + 1][j + 1];
+		T1 = data[i][j + 1];
+	}
+	else
+	{
+		x1 = j + 1;
+		x2 = j + 1;
+
+		y1 = i + 1;
+		y2 = i;
+
+		T1 = data[i + 1][j + 1];
+		T2 = data[i][j + 1];
+	}
+	xc = CalcXc(x1, x2, T1, T2, val);
+	yc = CalcXc(y1, y2, T1, T2, val);
+	out.first = xc;
+	out.second = yc;
+	return true;
+
+}
+
+double Drawer::CalcXc(double x1, double x2, double T1, double T2, double val)
+{
+	return x2 - (T2 - val) * (x2 - x1) / (T2 - T1);
+}
+
+double Drawer::CalcYc(double y1, double y2, double T1, double T2, double val)
+{
+	return y2 - (T2 - val) * (y2 - y1) / (T2 - T1);
+}
+
+

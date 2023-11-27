@@ -118,6 +118,11 @@ void MyDlg::OnTimer(UINT_PTR nIDEvent)
 	// TODO: добавьте свой код обработчика сообщений или вызов стандартного
 	drw.SetData(m.GetData());
 	drw.Invalidate();
+	if (open3d)
+	{
+		drw.ShareWith(dlg3d->drw);
+		dlg3d->drw.Invalidate();
+	}
 	CDialogEx::OnTimer(nIDEvent);
 }
 
@@ -125,7 +130,11 @@ void MyDlg::OnTimer(UINT_PTR nIDEvent)
 void MyDlg::OnBnClickedButton3d()
 {
 	// TODO: добавьте свой код обработчика уведомлений
-	
+	dlg3d = new OpenGlDlg();
+	open3d = true;
+	dlg3d->DoModal();
+	delete dlg3d;
+	open3d = false;
 }
 
 DWORD __stdcall ModelThreadFunc(LPVOID p)

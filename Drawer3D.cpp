@@ -49,6 +49,17 @@ END_MESSAGE_MAP()
 
 
 
+void Drawer3D::AllColorsToGlRange()
+{
+	for (int i = 0; i < Colordata.size(); i++)
+	{
+		for (int j = 0; j < Colordata[i].size(); j++)
+		{
+			Colordata[i][j].ToOpenGlRange();
+		}
+	}
+}
+
 inline m_Color Drawer3D::GetColor(double val)
 {
 	double step = (zmax - zmin) / 9;
@@ -91,9 +102,10 @@ void Drawer3D::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	double b;
-	b = scale * max(fabs(xmax), (fabs(ymin)));
-	glOrtho(-b, b, -b, b, -b, b);
+	glScalef(scale, scale, scale);
+	
+	double k = 3;
+	glOrtho(-xmax,xmax, -ymax, ymax, -k * zmax, k * zmax);
 	//glTranslatef(0, b / 4., 0);
 
 	int width = lpDrawItemStruct->rcItem.right - lpDrawItemStruct->rcItem.left;
@@ -118,50 +130,45 @@ void Drawer3D::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	glColor3d(1, 0, 0);
 	glVertex3d(0, 0, 0);
-	glVertex3d(b, 0, 0);
+	glVertex3d(xmax, 0, 0);
 
 	glColor3d(0, 0, 1);
 	glVertex3d(0, 0, 0);
-	glVertex3d(0, b, 0);
+	glVertex3d(0, ymax, 0);
 
 	glColor3d(0, 1, 0);
 	glVertex3d(0, 0, 0);
-	glVertex3d(0, 0, b);
+	glVertex3d(0, 0, zmax);
 
 
 	glEnd();
 
-
+	AllColorsToGlRange();
 	for (int i = 0; i < ymax - 1; i++)
 	{
 		for (int j = 0; j < xmax - 1; j++)
 		{
-			glBegin(GL_QUADS);
+			glBegin(GL_POLYGON);
 
 			auto& ij = Colordata[i][j];
-			ij.ToOpenGlRange();
 			glColor3d(ij.r, ij.g, ij.b);
 			glVertex3d(i, j, data[i][j]);
 
 			auto& i1j = Colordata[i + 1][j];
-			i1j.ToOpenGlRange();
 			glColor3d(i1j.r, i1j.g, i1j.b);
 			glVertex3d(i + 1, j, data[i + 1][j]);
 
 			auto& i1j1 = Colordata[i + 1][j + 1];
-			i1j1.ToOpenGlRange();
 			glColor3d(i1j1.r, i1j1.g, i1j1.b);
 			glVertex3d(i + 1, j + 1, data[i + 1][j + 1]);
 
 			auto& ij1 = Colordata[i][j + 1];
-			ij1.ToOpenGlRange();
 			glColor3d(ij1.r, ij1.g, ij1.b);
 			glVertex3d(i, j + 1, data[i][j + 1]);
 
 			glEnd();
 		}
 	}
-
 
 	
 
@@ -304,12 +311,12 @@ BOOL Drawer3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	// TODO: добавьте свой код обработчика сообщений или вызов стандартного
 	if (zDelta > 0)
 	{
-		scale /= 1 + double(zDelta) / (1 + zDelta);
+		scale *= 1.1;
 	}
 	else
 	{
 		zDelta *= -1;
-		scale *= 1 + double(zDelta) / (1 + zDelta);
+		scale /= 1.1;
 	}
 	Invalidate();
 	return CStatic::OnMouseWheel(nFlags, zDelta, pt);

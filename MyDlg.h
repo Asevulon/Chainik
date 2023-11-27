@@ -42,10 +42,11 @@ public:
 	UINT_PTR timerid;
 	afx_msg void OnBnClickedButton3d();
 
-	OpenGlDlg dlg3d;
+	OpenGlDlg* dlg3d;
 	HANDLE ModelThread;
 	Model m;
 	ParamsDlg pdlg;
+	bool open3d = false;
 };
 
 DWORD WINAPI ModelThreadFunc(LPVOID p);

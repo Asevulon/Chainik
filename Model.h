@@ -99,7 +99,7 @@ public:
 
 	vector<vector<double>> GetT();
 	void SetT(vector<vector<double>>& ts);
-
+	ModelCellsParams GetParams();
 	void CalcD();
 	void CalcDz();
 

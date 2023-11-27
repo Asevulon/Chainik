@@ -5,7 +5,11 @@
 void Model::InitInstance()
 {
 	mc.InitInstance();
-	psi = ka / dr;
+	auto pr = mc.GetParams();
+	psi = ka / pr.dr;
+	
+	//muN = (1 - psi / (2 * pr.km)) / (1 + psi / (2 * pr.km));
+	//nuN = psi * pr.T / (1 + psi / (2 * pr.km));
 	muN = 1;
 	nuN = 0;
 	mu0 = 1;
@@ -92,17 +96,17 @@ void Model::CalcHalfStepT()
 	for (int i = 1; i < imax - 1; i++)
 	{
 		data[i][jmax - 1] = (muN * betta[i][jmax - 1] + nuN) / (1 - muN * alpha[i][jmax - 1]);
-		for (int j = jmax - 2; j > 0; j--)
+		for (int j = jmax - 1; j > 0; j--)
 		{
 			data[i][j - 1] = alpha[i][j] * data[i][j] + betta[i][j];
 		}
 		data[i][0] = mu0 * data[i][1] + nu0;
 	}
 
-	/*data[0][0] = mu0 * data[0][1] + nu0;
+	data[0][0] = mu0 * data[0][1] + nu0;
 	data[imax - 1][0] = mu0 * data[imax - 1][1] + nu0;
 	data[0][jmax - 1] = muN * data[0][jmax - 2] + nuN;
-	data[imax - 1][jmax - 1] = muN * data[imax - 1][jmax - 2] + nuN;*/
+	data[imax - 1][jmax - 1] = muN * data[imax - 1][jmax - 2] + nuN;
 
 }
 
@@ -111,16 +115,16 @@ void Model::CalcHalfStepTz()
 	for (int j = 1; j < jmax - 1; j++)
 	{
 		data[imax -1][j] = (muN * bettaz[imax - 1][j] + nuN) / (1 - muN * alphaz[imax - 1][j]);
-		for (int i = imax - 2; i > 0; i--)
+		for (int i = imax - 1; i > 0; i--)
 		{
 			data[i - 1][j] = alphaz[i][j] * data[i][j] + bettaz[i][j];
 		}
 		data[0][j] = muN * data[1][j] + nuN;
 	}
-	/*data[0][0] = muN * data[1][0] + nuN;
+	data[0][0] = muN * data[1][0] + nuN;
 	data[imax - 1][0] = muN * data[imax - 2][0] + nuN;
 	data[0][jmax - 1] = muN * data[1][jmax - 1] + nuN;
-	data[imax - 1][jmax - 1] = muN * data[imax - 2][jmax - 1] + nuN;*/
+	data[imax - 1][jmax - 1] = muN * data[imax - 2][jmax - 1] + nuN;
 }
 
 Model::Model()
@@ -790,6 +794,11 @@ void ModelCells::SetT(vector<vector<double>>& ts)
 			data[i][j].T = ts[i][j];
 		}
 	}
+}
+
+ModelCellsParams ModelCells::GetParams()
+{
+	return p;
 }
 
 void ModelCells::CalcD()
