@@ -45,6 +45,7 @@ public:
 	virtual ~Drawer();
 
 protected:
+	
 	double CalcStringLen(HDC hDC, CString string);
 	void Drawer::Normalize();
 	inline m_Color Drawer::GetColor(double val);
@@ -52,6 +53,7 @@ protected:
 	inline void MakeColorData();
 	pair<double, double>CalcLinesDot(double val, int i1, int j1, int i2, int j2);
 	void CreateLines();
+	double Distance(pair<double, double>& left, pair<double, double>& right);
 	vector<pair<double, double>>MakeLine(vector<vector<bool>>& linedata);
 	vector<pair<double, double>>TransformLine(vector<pair<double, double>>&ntline, double val);
 	bool FindIntersectionT(int i, int j, double val, pair<double, double>& out);

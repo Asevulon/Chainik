@@ -409,6 +409,11 @@ void Drawer::CreateLines()
 
 }
 
+double Drawer::Distance(pair<double, double>& left, pair<double, double>& right)
+{
+	return (left.first - right.first) * (left.first - right.first) + (left.second - right.second) * (left.second - right.second);
+}
+
 vector<pair<double, double>> Drawer::MakeLine(vector<vector<bool>>& linedata)
 {
 	vector<pair<double, double>>res;
@@ -463,13 +468,17 @@ vector<pair<double, double>> Drawer::MakeLine(vector<vector<bool>>& linedata)
 	return res;
 }
 
+bool forsort(pair<double, double>& left, pair<double, double>& right)
+{
+	return left.first < right.first;
+}
 vector<pair<double, double>> Drawer::TransformLine(vector<pair<double, double>>& ntline, double val)
 {
 	vector<pair<double, double>>res;
 	pair<double, double> l, t, b, r;
 
-	vector<pair<double, double>>temp;
-
+	vector<pair<double, double>>temp, dist;
+	
 	if (FindIntersectionL(ntline[0].second, ntline[0].first, val, l))temp.push_back(l);
 	if (FindIntersectionR(ntline[0].second, ntline[0].first, val, r))temp.push_back(r);
 	if (FindIntersectionT(ntline[0].second, ntline[0].first, val, t))temp.push_back(t);
@@ -478,10 +487,12 @@ vector<pair<double, double>> Drawer::TransformLine(vector<pair<double, double>>&
 	if (temp[0].first < temp[1].first)
 	{
 		res.push_back(temp[0]);
+		res.push_back(temp[1]);
 	}
 	else
 	{
 		res.push_back(temp[1]);
+		res.push_back(temp[0]);
 	}
 	if (ntline.size() == 1)return res;
 
@@ -492,16 +503,15 @@ vector<pair<double, double>> Drawer::TransformLine(vector<pair<double, double>>&
 		if (FindIntersectionR(ntline[i].second, ntline[i].first, val, r))temp.push_back(r);
 		if (FindIntersectionT(ntline[i].second, ntline[i].first, val, t))temp.push_back(t);
 		if (FindIntersectionB(ntline[i].second, ntline[i].first, val, b))temp.push_back(b);
-		
-		if (temp[0].first < temp[1].first)
+		dist.clear();
+		for (int j = 0; j < temp.size(); j++)
 		{
-			res.push_back(temp[0]);
-			res.push_back(temp[1]);
+			dist.push_back(pair<double, double>(Distance(temp[j], *res.rbegin()), j));
 		}
-		else
+		sort(dist.begin(), dist.end(), forsort);
+		for (int j = 0; j < dist.size(); j++)
 		{
-			res.push_back(temp[1]);
-			res.push_back(temp[0]);
+			res.push_back(temp[dist[j].second]);
 		}
 	}
 	return res;
