@@ -556,8 +556,8 @@ bool Drawer::FindIntersectionT(int i, int j, double val, pair<double, double>& o
 		y1 = i + 1;
 		y2 = i + 1;
 
-		T1 = data[i + 1][j];
-		T2 = data[i + 1][j + 1];
+		T1 = data[i + 1][j + 1];
+		T2 = data[i + 1][j];
 	}
 	xc = CalcXc(x1, x2, T1, T2, val);
 	yc = CalcXc(y1, y2, T1, T2, val);
@@ -605,8 +605,8 @@ bool Drawer::FindIntersectionB(int i, int j, double val, pair<double, double>& o
 		y1 = i;
 		y2 = i;
 
-		T1 = data[i][j];
-		T2 = data[i][j + 1];
+		T1 = data[i][j + 1];
+		T2 = data[i][j];
 	}
 	xc = CalcXc(x1, x2, T1, T2, val);
 	yc = CalcXc(y1, y2, T1, T2, val);

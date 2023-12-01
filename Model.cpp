@@ -69,6 +69,7 @@ void Model::CalcAlphaBetta()
 	{
 		alpha[i][1] = mu0;
 		betta[i][1] = nu0;
+		
 		for (int j = 2; j < jmax; j++)
 		{
 			alpha[i][j] = -B[i][j - 1] / (A[i][j - 1] * alpha[i][j - 1] + C[i][j - 1]);
@@ -83,6 +84,7 @@ void Model::CalcAlphaBettaz()
 	{
 		alphaz[1][j] = muN;
 		bettaz[1][j] = nuN;
+		
 		for (int i = 2; i < imax; i++)
 		{
 			alphaz[i][j] = -Bz[i - 1][j] / (Az[i - 1][j] * alphaz[i - 1][j] + Cz[i - 1][j]);
@@ -115,6 +117,7 @@ void Model::CalcHalfStepTz()
 	for (int j = 1; j < jmax - 1; j++)
 	{
 		data[imax -1][j] = (muN * bettaz[imax - 1][j] + nuN) / (1 - muN * alphaz[imax - 1][j]);
+
 		for (int i = imax - 1; i > 0; i--)
 		{
 			data[i - 1][j] = alphaz[i][j] * data[i][j] + bettaz[i][j];
@@ -276,12 +279,12 @@ void ModelCells::SetMaterial()
 
 void ModelCells::SetBorders()
 {
-	for (int j = 1; j < p.wj + 1; j++)
+	for (int j = 0; j < p.wj + 1; j++)
 	{
 		data[p.d][j].borderz = true;
 	}
 
-	for (int j = 1; j < p.wj + 1; j++)
+	for (int j = 0; j < p.wj + 1; j++)
 	{
 		data[p.d + p.hj][j].borderz = true;
 	}
@@ -428,9 +431,9 @@ void ModelCells::SetABC()
 		}
 	}*/
 
-for (int i = 1; i < data.size() - 1; i++)
+for (int i = 0; i < data.size(); i++)
 {
-	for (int j = 1; j < data[i].size() - 1; j++)
+	for (int j = 0; j < data[i].size(); j++)
 	{
 		if (data[i][j].border)
 		{
@@ -485,10 +488,19 @@ inline void ModelCells::C1(int i, int j)
 
 inline void ModelCells::D1(int i, int j)
 {
+	double Ti1 = p.T;
+	if (i != data.size() - 1)Ti1 = data[i + 1][j].T;
+	double Ti_1 = p.T;
+	if (i != 0)Ti_1 = data[i - 1][j].T;
+	double Tj1 = p.T;
+	if (j != data[0].size() - 1)Tj1 = data[i][j + 1].T;
+	double Tj_1 = p.T;
+	if (j != 0)Tj_1 = data[i][j - 1].T;
+
 	double t1 = (2 - data[i][j].C) * data[i][j].T;
-	double t2 = -data[i][j].B * data[i][j + 1].T;
-	double t3 = -data[i][j].A * data[i][j - 1].T;
-	double t4 = GetOmega(i, j) * p.dt * (data[i + 1][j].T + data[i - 1][j].T - 2 * data[i][j].T) / (2 * p.dr * p.dr);
+	double t2 = -data[i][j].B * Tj1;
+	double t3 = -data[i][j].A * Tj_1;
+	double t4 = GetOmega(i, j) * p.dt * (Ti1 + Ti_1 - 2 * data[i][j].T) / (2 * p.dr * p.dr);
 	double t5 = p.dt * P[i][j] / 2;
 	data[i][j].D = t1 + t2 + t3 + t4 + t5;
 }
@@ -510,10 +522,19 @@ inline void ModelCells::C2(int i, int j)
 
 inline void ModelCells::D2(int i, int j)
 {
-	double t1 = GetOmega(i, j) * p.dt * (data[i][j + 1].T + data[i][j - 1].T - 2 * data[i][j].T) / (2 * p.dr * p.dr);
-	double t2 = GetOmega(i, j) * p.dt * (data[i][j + 1].T - data[i][j - 1].T) / (2 * p.dr * j * 2 * p.dr);
+	double Ti1 = p.T;
+	if (i != data.size() - 1)Ti1 = data[i + 1][j].T;
+	double Ti_1 = p.T;
+	if (i != 0)Ti_1 = data[i - 1][j].T;
+	double Tj1 = p.T;
+	if (j != data[0].size() - 1)Tj1 = data[i][j + 1].T;
+	double Tj_1 = p.T;
+	if (j != 0)Tj_1 = data[i][j - 1].T;
+
+	double t1 = GetOmega(i, j) * p.dt * (Tj1 + Tj_1 - 2 * data[i][j].T) / (2 * p.dr * p.dr);
+	double t2 = GetOmega(i, j) * p.dt * (Tj1 - Tj_1) / (2 * p.dr * j * 2 * p.dr);
 	double t3 = p.dt * P[i][j] / 2;
-	double t4 = (2 - data[i][j].Cz) * data[i][j].T - data[i][j].Az * data[i - 1][j].T - data[i][j].Bz * data[i + 1][j].T;
+	double t4 = (2 - data[i][j].Cz) * data[i][j].T - data[i][j].Az * Ti_1 - data[i][j].Bz * Ti1;
 	data[i][j].Dz = t1 + t2 + t3 + t4;
 }
 
@@ -530,6 +551,8 @@ inline double ModelCells::GetOmega(int i, int j)
 
 inline double ModelCells::Getk(int i, int j)
 {
+	if ((i < 0) || (i >= data.size()) || (j < 0) || (j >= data[0].size()))return ka;
+
 	switch (data[i][j].type)
 	{
 	case metall:return p.km;
@@ -803,9 +826,9 @@ ModelCellsParams ModelCells::GetParams()
 
 void ModelCells::CalcD()
 {
-	for (int i = 1; i < data.size() - 1; i++)
+	for (int i = 0; i < data.size(); i++)
 	{
-		for (int j = 1; j < data[i].size() - 1; j++)
+		for (int j = 0; j < data[i].size(); j++)
 		{
 			if (!data[i][j].border)D1(i, j);
 		}
@@ -814,9 +837,9 @@ void ModelCells::CalcD()
 
 void ModelCells::CalcDz()
 {
-	for (int i = 1; i < data.size() - 1; i++)
+	for (int i = 0; i < data.size(); i++)
 	{
-		for (int j = 1; j < data[i].size() - 1; j++)
+		for (int j = 0; j < data[i].size(); j++)
 		{
 			if (!data[i][j].borderz)D2(i, j);
 		}

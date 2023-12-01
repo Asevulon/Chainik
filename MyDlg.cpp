@@ -97,9 +97,7 @@ HCURSOR MyDlg::OnQueryDragIcon()
 void MyDlg::OnBnClickedOk()
 {
 	// TODO: добавьте свой код обработчика уведомлений
-	EnterCriticalSection(&m.cs);
 	TerminateThread(ModelThread, 0);
-	LeaveCriticalSection(&m.cs);
 
 	pdlg.m = &m;
 	if (pdlg.DoModal() != IDOK)return;
@@ -116,6 +114,7 @@ void MyDlg::OnBnClickedOk()
 void MyDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: добавьте свой код обработчика сообщений или вызов стандартного
+
 	drw.SetData(m.GetData());
 	drw.Invalidate();
 	if (open3d)

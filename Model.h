@@ -39,7 +39,8 @@ struct DrawerParamsInfo
 class ModelCells
 {
 private:
-	
+	double ka = 0.0278;
+
 	
 	struct Cell
 	{
